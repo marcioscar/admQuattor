@@ -288,7 +288,7 @@ export default function Index() {
     return recMes._sum.valor;
   }
 
-  const inicial = 64339.85;
+  const inicial = 62601.84;
 
   // const saldoInicial4 = 64339.85;
   const saldoInicial5 = inicial;
