@@ -42,11 +42,11 @@ export function Navbar() {
             FOLHA
           </NavLink>
           <NavLink
-            to="/estatisticas"
+            to="/fluxo"
             className={({ isActive }) =>
               isActive ? activeClassName : undefined
             }>
-            DASHBOARD
+            FLUXO
           </NavLink>
         </div>
         <div className="flex space-x-4 ">
