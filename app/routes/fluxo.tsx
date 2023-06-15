@@ -6,16 +6,9 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import { Navbar } from "~/components/Navbar";
-import {
-  groupReceitasMes,
-  receitasPorCentroMes,
-} from "~/utils/receitas.server";
+import { getReceitas } from "~/utils/receitas.server";
 import _, { capitalize } from "lodash";
-import {
-  DespesasMes,
-  // totDespesas,
-  totTipoDespesasFixa,
-} from "~/utils/despesas.server";
+import { getDespesas } from "~/utils/despesas.server";
 import { groupSalario, groupSalarioAreas } from "~/utils/folha.server";
 
 export const meta: V2_MetaFunction = () => {
@@ -25,50 +18,82 @@ export const meta: V2_MetaFunction = () => {
   ];
 };
 export const loader = async ({ request }: LoaderArgs) => {
-  const recMes5 = await groupReceitasMes("05/2023");
-  const recMes6 = await groupReceitasMes("06/2023");
-  const recMes7 = await groupReceitasMes("07/2023");
-  const recMes8 = await groupReceitasMes("08/2023");
-  const recMes9 = await groupReceitasMes("09/2023");
-  const recMes10 = await groupReceitasMes("10/2023");
-  const recMes11 = await groupReceitasMes("11/2023");
-  const recMes12 = await groupReceitasMes("12/2023");
+  const receitas = await getReceitas();
+  const despesas = await getDespesas();
 
-  const ReceitasCentro5 = await receitasPorCentroMes(String("05/2023"));
-  const ReceitasCentro6 = await receitasPorCentroMes(String("06/2023"));
-  const ReceitasCentro7 = await receitasPorCentroMes(String("07/2023"));
-  const ReceitasCentro8 = await receitasPorCentroMes(String("08/2023"));
-  const ReceitasCentro9 = await receitasPorCentroMes(String("09/2023"));
-  const ReceitasCentro10 = await receitasPorCentroMes(String("10/2023"));
-  const ReceitasCentro11 = await receitasPorCentroMes(String("11/2023"));
-  const ReceitasCentro12 = await receitasPorCentroMes(String("12/2023"));
+  function recMes(mes: any) {
+    const tot = receitas.filter((o) => o.data.includes(mes));
+    return _.sumBy(tot, "valor");
+  }
 
-  const despMes5 = await DespesasMes("mai-2023");
-  const despMes6 = await DespesasMes("jun-2023");
-  const despMes7 = await DespesasMes("jul-2023");
-  const despMes8 = await DespesasMes("ago-2023");
-  const despMes9 = await DespesasMes("set-2023");
-  const despMes10 = await DespesasMes("out-2023");
-  const despMes11 = await DespesasMes("nov-2023");
-  const despMes12 = await DespesasMes("dez-2023");
+  const recMes5 = recMes("05/2023");
+  const recMes6 = recMes("06/2023");
+  const recMes7 = recMes("07/2023");
+  const recMes8 = recMes("08/2023");
+  const recMes9 = recMes("09/2023");
+  const recMes10 = recMes("10/2023");
+  const recMes11 = recMes("11/2023");
+  const recMes12 = recMes("12/2023");
 
-  // const TotDespesas5 = await totDespesas(String("mai-2023"));
-  // const TotDespesas6 = await totDespesas(String("jun-2023"));
-  // const TotDespesas7 = await totDespesas(String("jul-2023"));
-  // const TotDespesas8 = await totDespesas(String("ago-2023"));
-  // const TotDespesas9 = await totDespesas(String("set-2023"));
-  // const TotDespesas10 = await totDespesas(String("out-2023"));
-  // const TotDespesas11 = await totDespesas(String("nov-2023"));
-  // const TotDespesas12 = await totDespesas(String("dez-2023"));
+  function recCentroMes(mes: any) {
+    const tot = _.map(
+      _.groupBy(
+        receitas.filter((o) => o.data.includes(mes)),
+        "centro"
+      ),
+      (centro, idx) => {
+        return { centro: idx, valor: _.sumBy(centro, "valor") };
+      }
+    );
+    return _.orderBy(tot, ["valor"], ["desc"]);
+  }
 
-  const DespFixas5 = await totTipoDespesasFixa("mai-2023");
-  const DespFixas6 = await totTipoDespesasFixa("jun-2023");
-  const DespFixas7 = await totTipoDespesasFixa("jul-2023");
-  const DespFixas8 = await totTipoDespesasFixa("ago-2023");
-  const DespFixas9 = await totTipoDespesasFixa("set-2023");
-  const DespFixas10 = await totTipoDespesasFixa("out-2023");
-  const DespFixas11 = await totTipoDespesasFixa("nov-2023");
-  const DespFixas12 = await totTipoDespesasFixa("dez-2023");
+  const ReceitasCentro5 = recCentroMes("05/2023");
+  const ReceitasCentro6 = recCentroMes("06/2023");
+  const ReceitasCentro7 = recCentroMes("07/2023");
+  const ReceitasCentro8 = recCentroMes("08/2023");
+  const ReceitasCentro9 = recCentroMes("09/2023");
+  const ReceitasCentro10 = recCentroMes("10/2023");
+  const ReceitasCentro11 = recCentroMes("11/2023");
+  const ReceitasCentro12 = recCentroMes("12/2023");
+
+  function despMes(mes: any) {
+    const desp = despesas.filter((o) => o.referencia.includes(mes));
+    return _.orderBy(desp, ["valor"], ["desc"]);
+  }
+
+  const despMes5 = despMes("mai-2023");
+  const despMes6 = despMes("jun-2023");
+  const despMes7 = despMes("jul-2023");
+  const despMes8 = despMes("ago-2023");
+  const despMes9 = despMes("set-2023");
+  const despMes10 = despMes("out-2023");
+  const despMes11 = despMes("nov-2023");
+  const despMes12 = despMes("dez-2023");
+
+  function despTipo(mes: any, tipo: any) {
+    const tot = _.map(
+      _.groupBy(
+        despesas.filter(
+          (o) => o.referencia.includes(mes) && o.tipo.includes(tipo)
+        ),
+        "conta"
+      ),
+      (conta, idx) => {
+        return { conta: idx, valor: _.sumBy(conta, "valor") };
+      }
+    );
+    return _.orderBy(tot, ["valor"], ["desc"]);
+  }
+
+  const DespFixas5 = despTipo("mai-2023", "fixa");
+  const DespFixas6 = despTipo("jun-2023", "fixa");
+  const DespFixas7 = despTipo("jul-2023", "fixa");
+  const DespFixas8 = despTipo("ago-2023", "fixa");
+  const DespFixas9 = despTipo("set-2023", "fixa");
+  const DespFixas10 = despTipo("out-2023", "fixa");
+  const DespFixas11 = despTipo("nov-2023", "fixa");
+  const DespFixas12 = despTipo("dez-2023", "fixa");
 
   const TotSalarios = await groupSalario();
   const TotSalMes5 = _.filter(TotSalarios, ["_id", "mai-2023"]);
@@ -88,6 +113,17 @@ export const loader = async ({ request }: LoaderArgs) => {
   const salAreas10 = await groupSalarioAreas("out-2023");
   const salAreas11 = await groupSalarioAreas("nov-2023");
   const salAreas12 = await groupSalarioAreas("dez-2023");
+  // const rec = await getReceitas();
+  // console.log(rec);
+
+  // console.log(
+  //   _.filter(
+  //     _.map(_.groupBy(rec, "centro"), (centro, idx) => {
+  //       return { centro: idx, valor: _.sumBy(centro, "valor") };
+  //     }),
+  //     ["centro", "Adesão"]
+  //   )
+  // );
 
   return {
     ReceitasCentro5,
@@ -106,14 +142,6 @@ export const loader = async ({ request }: LoaderArgs) => {
     recMes10,
     recMes11,
     recMes12,
-    // TotDespesas5,
-    // TotDespesas6,
-    // TotDespesas7,
-    // TotDespesas8,
-    // TotDespesas9,
-    // TotDespesas10,
-    // TotDespesas11,
-    // TotDespesas12,
     despMes5,
     despMes6,
     despMes7,
@@ -171,14 +199,7 @@ export default function Index() {
     recMes10,
     recMes11,
     recMes12,
-    // TotDespesas5,
-    // TotDespesas6,
-    // TotDespesas7,
-    // TotDespesas8,
-    // TotDespesas9,
-    // TotDespesas10,
-    // TotDespesas11,
-    // TotDespesas12,
+
     despMes5,
     despMes6,
     despMes7,
@@ -270,11 +291,11 @@ export default function Index() {
     DespesasVariavelTotalf: any,
     recMes: any
   ) {
-    return DespesasFixasTotal / 1 - DespesasVariavelTotalf / recMes._sum.valor;
+    return DespesasFixasTotal / 1 - DespesasVariavelTotalf / recMes;
   }
 
   function MargemDeContribuicaof(recMes: any, DespesasVariavelTotal: any) {
-    return recMes._sum.valor - DespesasVariavelTotalf(DespesasVariavelTotal);
+    return recMes - DespesasVariavelTotalf(DespesasVariavelTotal);
   }
 
   function LucroOpf(recMes: any, despmes: any, totmes: any) {
@@ -285,7 +306,7 @@ export default function Index() {
   }
 
   function totalReceitas(recMes: any) {
-    return recMes._sum.valor;
+    return recMes;
   }
 
   const inicial = 62601.84;
@@ -404,7 +425,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -412,7 +433,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes5))}
+                        }).format(rec.valor / totalReceitas(recMes5))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -510,14 +531,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes5))}
+                        }).format(fixa.valor / totalReceitas(recMes5))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -749,7 +770,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -757,7 +778,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes6))}
+                        }).format(rec.valor / totalReceitas(recMes6))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -810,6 +831,7 @@ export default function Index() {
                           style: "percent",
                         }).format(desp.valor / totalReceitas(recMes6))}
                       </td>
+                      <td></td>
                     </tr>
                   ))}
                   <tr className="bg-white border-b ">
@@ -880,14 +902,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes6))}
+                        }).format(fixa.valor / totalReceitas(recMes6))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -929,6 +951,7 @@ export default function Index() {
                           style: "percent",
                         }).format(sal.valor / totalReceitas(recMes6))}
                       </td>
+                      <td></td>
                     </tr>
                   ))}
                   <tr
@@ -1172,7 +1195,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1180,7 +1203,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes7))}
+                        }).format(rec.valor / totalReceitas(recMes7))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -1301,14 +1324,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes7))}
+                        }).format(fixa.valor / totalReceitas(recMes7))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -1591,7 +1614,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1599,7 +1622,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes8))}
+                        }).format(rec.valor / totalReceitas(recMes8))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -1720,14 +1743,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes8))}
+                        }).format(fixa.valor / totalReceitas(recMes8))}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center"></td>
                     </tr>
@@ -2009,7 +2032,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -2017,7 +2040,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes9))}
+                        }).format(rec.valor / totalReceitas(recMes9))}
                       </td>
                       <td></td>
                     </tr>
@@ -2138,14 +2161,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes9))}
+                        }).format(fixa.valor / totalReceitas(recMes9))}
                       </td>
                       <td></td>
                     </tr>
@@ -2427,7 +2450,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -2435,7 +2458,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes10))}
+                        }).format(rec.valor / totalReceitas(recMes10))}
                       </td>
                       <td></td>
                     </tr>
@@ -2556,14 +2579,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes10))}
+                        }).format(fixa.valor / totalReceitas(recMes10))}
                       </td>
                       <td></td>
                     </tr>
@@ -2855,7 +2878,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -2863,7 +2886,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes11))}
+                        }).format(rec.valor / totalReceitas(recMes11))}
                       </td>
                       <td></td>
                     </tr>
@@ -2984,14 +3007,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes11))}
+                        }).format(fixa.valor / totalReceitas(recMes11))}
                       </td>
                       <td></td>
                     </tr>
@@ -3289,7 +3312,7 @@ export default function Index() {
                         {rec.centro}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {rec._sum.valor.toLocaleString("pt-br", {
+                        {rec.valor.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -3297,7 +3320,7 @@ export default function Index() {
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(rec._sum.valor / totalReceitas(recMes12))}
+                        }).format(rec.valor / totalReceitas(recMes12))}
                       </td>
                       <td></td>
                     </tr>
@@ -3418,14 +3441,14 @@ export default function Index() {
                         {fixa.conta}
                       </th>
                       <td className="py-2 px-6 font-mono text-right">
-                        {fixa._sum.valor?.toLocaleString("pt-br", {
+                        {fixa.valor?.toLocaleString("pt-br", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       <td className="py-2 px-6 text-slate-900 text-center">
                         {new Intl.NumberFormat("de-DE", {
                           style: "percent",
-                        }).format(fixa._sum.valor / totalReceitas(recMes12))}
+                        }).format(fixa.valor / totalReceitas(recMes12))}
                       </td>
                       <td></td>
                     </tr>

@@ -144,6 +144,22 @@ export const receitasPorCentroMes = async (ref: string) => {
   });
 };
 
+export const receitasCentro = async () => {
+  return prisma.receitas.groupBy({
+    by: ["centro", "data"],
+
+    _sum: {
+      valor: true,
+    },
+
+    orderBy: {
+      _sum: {
+        valor: "desc",
+      },
+    },
+  });
+};
+
 export const receitasPorData = async () => {
   return prisma.receitas.groupBy({
     by: ["data"],
@@ -154,7 +170,7 @@ export const receitasPorData = async () => {
 };
 export const receitasPorCentro = async () => {
   return prisma.receitas.groupBy({
-    by: ["centro", "data"],
+    by: ["data"],
 
     // where: {
     //   data: {
@@ -166,7 +182,7 @@ export const receitasPorCentro = async () => {
       valor: true,
     },
     orderBy: {
-      centro: "asc",
+      data: "asc",
     },
   });
 };
