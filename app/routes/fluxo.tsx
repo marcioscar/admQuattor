@@ -1,5 +1,6 @@
 import type { V2_MetaFunction } from "@remix-run/node";
 import type { LoaderArgs, ActionArgs } from "@remix-run/node";
+
 import {
   useLoaderData,
   isRouteErrorResponse,
@@ -343,6 +344,7 @@ export default function Index() {
   return (
     <>
       <Navbar />
+
       <div className="flex  justify-center min-h-screen">
         <ul className="mx-auto grid w-full grid-cols-8 gap-x-1 px-8">
           <li className="">
@@ -559,6 +561,7 @@ export default function Index() {
                     </td>
                     <td className="py-2 px-6 text-slate-900 text-center"></td>
                   </tr>
+
                   {salAreas5?.map((sal: any) => (
                     <tr key={sal.mod} className="bg-white border-b ">
                       <th className="py-2 px-6 w-40  font-light text-slate-600 whitespace-nowrap ">
