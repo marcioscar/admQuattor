@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import type { tipoRec, tipoDesp } from "~/utils/types.server";
 import { Arrow } from "~/utils/icons";
-import { Load } from "../utils/icons";
+import * as icons from "../utils/icons";
 import {
   groupSalario,
   groupSalarioAreas,
@@ -115,7 +115,7 @@ export default function Index() {
     "valor"
   );
 
-  const salariosIndiretos =
+  const salariosIndiretos1 =
     (_.sumBy(
       _.filter(TotSalAreas, function (o) {
         return o.mod === "geral";
@@ -130,7 +130,64 @@ export default function Index() {
       ).valor) /
     9;
 
-  const despesasRateio =
+  function salariosIndiretos(alunos: Number) {
+    const salario =
+      (_.sumBy(
+        _.filter(TotSalAreas, function (o) {
+          return o.mod === "geral";
+        }),
+        "valor"
+      ) +
+        _.sumBy(
+          _.filter(totTipoDespesa, function (o) {
+            return o.conta === "Pro-labore";
+          }),
+          "_sum"
+        ).valor) /
+      1200;
+    return salario * alunos;
+  }
+  console.log(salariosIndiretos(1200));
+
+  function despesasRateio(alunos: Number) {
+    const despesa =
+      (DespesasFixasTotal -
+        _.sumBy(
+          _.filter(totTipoDespesa, function (o) {
+            return o.conta === "Pro-labore";
+          }),
+          "_sum"
+        ).valor -
+        _.sumBy(
+          _.filter(totTipoDespesa, function (o) {
+            return o.conta === "GAS";
+          }),
+          "_sum"
+        ).valor -
+        _.sumBy(
+          _.filter(totTipoDespesa, function (o) {
+            return o.conta === "FGTS";
+          }),
+          "_sum"
+        ).valor -
+        _.sumBy(
+          _.filter(totTipoDespesa, function (o) {
+            return o.conta === "GPS";
+          }),
+          "_sum"
+        ).valor) /
+      1200;
+    return despesa * alunos;
+  }
+
+  console.log(
+    despesasRateio(1).toLocaleString("pt-br", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+
+  const despesasRateio1 =
     (DespesasFixasTotal -
       _.sumBy(
         _.filter(totTipoDespesa, function (o) {
@@ -156,7 +213,7 @@ export default function Index() {
         }),
         "_sum"
       ).valor) /
-    9;
+    1200;
 
   const gas = _.sumBy(
     _.filter(totTipoDespesa, function (o) {
@@ -402,7 +459,7 @@ export default function Index() {
           <label className="mr-4 font-light   text-sm " htmlFor="rec">
             MÊS E ANO DE REFERÊNCIA
           </label>
-          {rec.state === "submitting" ? <Load /> : null}
+          {rec.state === "submitting" ? <icons.Load /> : null}
           <Arrow />
           <select
             className="rounded text-blue-600 h-8  pl-5 pr-10 hover:border-gray-400 focus:outline-none "
@@ -648,6 +705,648 @@ export default function Index() {
               </div>
             </div>
           </div>
+          <div className="block shadow-md col-span-3  rounded-md border border-gray-300 bg-gray text-center ">
+            <div className="border-gray-300  py-2 text-white bg-fuchsia-950	 flex justify-center items-center  px-4">
+              <p>Custos por Atividades</p>
+            </div>
+            <div className="h-92 p-2 bg-white">
+              <div className="overflow-y-auto  max-h-90 relative">
+                <table className="text-sm w-full  text-left text-slate-500 ">
+                  <thead className="text-xs text-gray-700 uppercase bg-stone-100 sticky top-0 ">
+                    <tr>
+                      <th scope="col" className=" py-3  ">
+                        Atividade
+                      </th>
+                      <th scope="col" className=" py-3 text-right ">
+                        Sal Direto
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Sal Indiretos
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Gerais
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Encargos
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Individuais
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Custos Total
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Receitas
+                      </th>
+                      <th scope="col" className="py-3 text-right">
+                        Resultado
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Musculação
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("musculacao").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(637).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(637).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {encargos("musculacao").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("musculacao") +
+                          salariosIndiretos(637) +
+                          despesasRateio(637) +
+                          encargos("musculacao") +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Musculação") +
+                          salReceitasAreas("Hora Certa") +
+                          salReceitasAreas("Assinatura") +
+                          salReceitasAreas("Fitness")
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Musculação") +
+                          salReceitasAreas("Hora Certa") +
+                          salReceitasAreas("Assinatura") +
+                          salReceitasAreas("Fitness") -
+                          (salarioArea("musculacao") +
+                            salariosIndiretos(637) +
+                            despesasRateio(637) +
+                            encargos("musculacao") +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Natação
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("natacao").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(144).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(144).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {encargos("natacao").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.9).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("natacao") +
+                          salariosIndiretos(144) +
+                          despesasRateio(144) +
+                          encargos("natacao") +
+                          gas * 0.9
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Natação Infantil") +
+                          salReceitasAreas("Hidroginástica")
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Natação Infantil") +
+                          salReceitasAreas("Hidroginástica") -
+                          (salarioArea("natacao") +
+                            salariosIndiretos(144) +
+                            despesasRateio(144) +
+                            encargos("natacao") +
+                            gas * 0.9)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Ballet
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("ballet").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(81).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(81).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td></td>
+
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("ballet") +
+                          salariosIndiretos(81) +
+                          despesasRateio(81) +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salReceitasAreas("Ballet").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Ballet") -
+                          (salarioArea("ballet") +
+                            salariosIndiretos(81) +
+                            despesasRateio(81) +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Boxe
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("boxe").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(17).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(17).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {encargos("boxe").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("boxe") +
+                          salariosIndiretos(17) +
+                          despesasRateio(17) +
+                          encargos("boxe") +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salReceitasAreas("Boxe").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Boxe") -
+                          (salarioArea("boxe") +
+                            salariosIndiretos(17) +
+                            despesasRateio(17) +
+                            encargos("boxe") +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Prime
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("prime").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(29).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(29).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td></td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("prime") +
+                          salariosIndiretos(29) +
+                          despesasRateio(29) +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salReceitasAreas("Quattor Prime").toLocaleString(
+                          "pt-br",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Quattor Prime") -
+                          (salarioArea("prime") +
+                            salariosIndiretos(29) +
+                            despesasRateio(29) +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Judô
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("judo").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(114).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(114).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td></td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("judo") +
+                          salariosIndiretos(114) +
+                          despesasRateio(114) +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salReceitasAreas("Judô").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Judô") -
+                          (salarioArea("judo") +
+                            salariosIndiretos(114) +
+                            despesasRateio(114) +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Aulas
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("aulas").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(20).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(20).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {encargos("aulas").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("aulas") +
+                          salariosIndiretos(20) +
+                          despesasRateio(20) +
+                          encargos("aulas") +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("JiuJitsu") +
+                          (salReceitasAreas("Pilates Solo") +
+                            salReceitasAreas("Fitdance"))
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("JiuJitsu") +
+                          (salReceitasAreas("Pilates Solo") +
+                            salReceitasAreas("Fitdance")) -
+                          (salarioArea("aulas") +
+                            salariosIndiretos(20) +
+                            despesasRateio(20) +
+                            encargos("aulas") +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Pilates
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("pilates").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(35).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(35).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td></td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("pilates") +
+                          salariosIndiretos(35) +
+                          despesasRateio(35) +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salReceitasAreas("Pilates Estudio").toLocaleString(
+                          "pt-br",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("Pilates Estudio") -
+                          (salarioArea("pilates") +
+                            salariosIndiretos(35) +
+                            despesasRateio(35) +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+                    <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Muaithay
+                      </th>
+                      <td className="py-2 font-mono  text-right">
+                        {salarioArea("muaithay").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salariosIndiretos(23).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {despesasRateio(23).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td></td>
+                      <td className="py-2 font-mono  text-right">
+                        {(gas * 0.0125).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salarioArea("muaithay") +
+                          salariosIndiretos(23) +
+                          despesasRateio(23) +
+                          gas * 0.0125
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {salReceitasAreas("MuayThai").toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="py-2 font-mono  text-right">
+                        {(
+                          salReceitasAreas("MuayThai") -
+                          (salarioArea("muaithay") +
+                            salariosIndiretos(23) +
+                            despesasRateio(23) +
+                            gas * 0.0125)
+                        ).toLocaleString("pt-br", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    </tr>
+
+                    {/* <tr className="bg-white border-b ">
+                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
+                        Lucro de 6%
+                      </th>
+                      <td className="py-2 px-6  font-mono text-right">
+                        <div className="text-slate-500 font-sm ">
+                          {Mensalidade6.toLocaleString("pt-br", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </td>
+                    </tr> */}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
           <div className="block shadow-md  col-span-2 rounded-md border border-gray-300 bg-gray text-center ">
             <div className="border-gray-300  py-2 text-white bg-emerald-600  flex justify-center items-center  px-4">
               <p>Previsão de Receitas</p>
@@ -705,648 +1404,6 @@ export default function Index() {
                         </div>
                       </td>
                     </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div className="block shadow-md col-span-3  rounded-md border border-gray-300 bg-gray text-center ">
-            <div className="border-gray-300  py-2 text-white bg-fuchsia-950	 flex justify-center items-center  px-4">
-              <p>Custos por Atividades</p>
-            </div>
-            <div className="h-44 p-2 bg-white">
-              <div className="overflow-y-auto  max-h-40 relative">
-                <table className="text-sm w-full  text-left text-slate-500 ">
-                  <thead className="text-xs text-gray-700 uppercase bg-stone-100 sticky top-0 ">
-                    <tr>
-                      <th scope="col" className=" py-3  ">
-                        Atividade
-                      </th>
-                      <th scope="col" className=" py-3 text-right ">
-                        Sal Direto
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Sal Indiretos
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Gerais
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Encargos
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Individuais
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Custos Total
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Receitas
-                      </th>
-                      <th scope="col" className="py-3 text-right">
-                        Resultado
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Musculação
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("musculacao").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {encargos("musculacao").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("musculacao") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          encargos("musculacao") +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Musculação") +
-                          salReceitasAreas("Hora Certa") +
-                          salReceitasAreas("Assinatura") +
-                          salReceitasAreas("Fitness")
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Musculação") +
-                          salReceitasAreas("Hora Certa") +
-                          salReceitasAreas("Assinatura") +
-                          salReceitasAreas("Fitness") -
-                          (salarioArea("musculacao") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            encargos("musculacao") +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Natação
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("natacao").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {encargos("natacao").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.9).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("natacao") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          encargos("natacao") +
-                          gas * 0.9
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Natação Infantil") +
-                          salReceitasAreas("Hidroginástica")
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Natação Infantil") +
-                          salReceitasAreas("Hidroginástica") -
-                          (salarioArea("natacao") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            encargos("natacao") +
-                            gas * 0.9)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Ballet
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("ballet").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td></td>
-
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("ballet") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salReceitasAreas("Ballet").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Ballet") -
-                          (salarioArea("ballet") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Boxe
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("boxe").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {encargos("boxe").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("boxe") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          encargos("boxe") +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salReceitasAreas("Boxe").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Boxe") -
-                          (salarioArea("boxe") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            encargos("boxe") +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Prime
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("prime").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td></td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("prime") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salReceitasAreas("Quattor Prime").toLocaleString(
-                          "pt-br",
-                          {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }
-                        )}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Quattor Prime") -
-                          (salarioArea("prime") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Judô
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("judo").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td></td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("judo") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salReceitasAreas("Judô").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Judô") -
-                          (salarioArea("judo") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Aulas
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("aulas").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {encargos("aulas").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("aulas") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          encargos("aulas") +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("JiuJitsu") +
-                          (salReceitasAreas("Pilates Solo") +
-                            salReceitasAreas("Fitdance"))
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("JiuJitsu") +
-                          (salReceitasAreas("Pilates Solo") +
-                            salReceitasAreas("Fitdance")) -
-                          (salarioArea("aulas") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            encargos("aulas") +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Pilates
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("pilates").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td></td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("pilates") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salReceitasAreas("Pilates Estudio").toLocaleString(
-                          "pt-br",
-                          {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }
-                        )}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("Pilates Estudio") -
-                          (salarioArea("pilates") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                    <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Muaithay
-                      </th>
-                      <td className="py-2 font-mono  text-right">
-                        {salarioArea("muaithay").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salariosIndiretos.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {despesasRateio.toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td></td>
-                      <td className="py-2 font-mono  text-right">
-                        {(gas * 0.0125).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salarioArea("muaithay") +
-                          salariosIndiretos +
-                          despesasRateio +
-                          gas * 0.0125
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {salReceitasAreas("MuayThai").toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-2 font-mono  text-right">
-                        {(
-                          salReceitasAreas("MuayThai") -
-                          (salarioArea("muaithay") +
-                            salariosIndiretos +
-                            despesasRateio +
-                            gas * 0.0125)
-                        ).toLocaleString("pt-br", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-
-                    {/* <tr className="bg-white border-b ">
-                      <th className="py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap ">
-                        Lucro de 6%
-                      </th>
-                      <td className="py-2 px-6  font-mono text-right">
-                        <div className="text-slate-500 font-sm ">
-                          {Mensalidade6.toLocaleString("pt-br", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
-                      </td>
-                    </tr> */}
                   </tbody>
                 </table>
               </div>
