@@ -1,5 +1,4 @@
-import type { V2_MetaFunction } from "@remix-run/node";
-import type { LoaderArgs, ActionArgs } from "@remix-run/node";
+import type { V2_MetaFunction, LoaderArgs, ActionArgs } from "@remix-run/node";
 
 import {
   useLoaderData,
@@ -7,7 +6,7 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import { Navbar } from "~/components/Navbar";
-import { getReceitas } from "~/utils/receitas.server";
+import { getRecebidos, getReceitas } from "~/utils/receitas.server";
 import _, { capitalize } from "lodash";
 import { getDespesas } from "~/utils/despesas.server";
 import { groupSalario, groupSalarioAreas } from "~/utils/folha.server";
@@ -19,7 +18,7 @@ export const meta: V2_MetaFunction = () => {
   ];
 };
 export const loader = async ({ request }: LoaderArgs) => {
-  const receitas = await getReceitas();
+  const receitas = await getRecebidos();
   const despesas = await getDespesas();
 
   function recMes(mes: any) {

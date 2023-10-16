@@ -1,4 +1,4 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction, ActionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -14,7 +14,6 @@ import {
   RiSearch2Line,
 } from "react-icons/ri";
 
-import type { ActionArgs } from "@remix-run/node";
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
   await baixarReceita(formData.get("_id"));

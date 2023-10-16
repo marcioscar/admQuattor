@@ -12,6 +12,18 @@ export const getReceitas = async () => {
   });
 };
 
+export const getRecebidos = async () => {
+  return prisma.receitas.findMany({
+    where: {
+      status: "Recebida",
+    },
+    orderBy: {
+      valor: "asc",
+    },
+    // take: 2,
+  });
+};
+
 // export const getReceitas = async () => {
 //   return prisma.receitas.findMany({
 //     orderBy: {
