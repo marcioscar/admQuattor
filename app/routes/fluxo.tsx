@@ -309,7 +309,7 @@ export default function Index() {
     return recMes;
   }
 
-  const inicial = 62601.84;
+  const inicial = 29220.9;
 
   // const saldoInicial4 = 64339.85;
   const saldoInicial5 = inicial;
@@ -318,12 +318,14 @@ export default function Index() {
   const saldoInicial8 = SaldoFinal(saldoInicial7, recMes7, despMes7, TotSal7);
   const saldoInicial9 = SaldoFinal(saldoInicial8, recMes8, despMes8, TotSal8);
   const saldoInicial10 = SaldoFinal(saldoInicial9, recMes9, despMes9, TotSal9);
-  const saldoInicial11 = SaldoFinal(
-    saldoInicial10,
-    recMes10,
-    despMes10,
-    TotSal10
-  );
+  // const saldoInicial11 = SaldoFinal(
+  //   saldoInicial10,
+  //   recMes10,
+  //   despMes10,
+  //   TotSal10
+  // );
+  const saldoInicial11 = inicial;
+
   const saldoInicial12 = SaldoFinal(
     saldoInicial11,
     recMes11,
