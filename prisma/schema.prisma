@@ -2,30 +2,30 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
 }
 
 // ./prisma/schema.prisma
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  email     String   @unique
-  password  String
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    email     String   @unique
+    password  String
 }
 
 model despesas {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  conta      String
-  data       DateTime
-  tipo       String
-  valor      Float
-  referencia String?
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    conta      String
+    data       DateTime
+    tipo       String
+    valor      Float
+    referencia String?
 }
 
 // model receitas {
@@ -36,36 +36,32 @@ model despesas {
 //   referencia String?
 // }
 model receitas {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  centro     String
-  data       String
-  valor      Float
-  referencia String?
-  forma  String?
-  lancamento  String?
-  status String?
+    id         String  @id @default(auto()) @map("_id") @db.ObjectId
+    centro     String
+    data       String
+    valor      Float
+    referencia String?
+    forma      String?
+    lancamento String?
+    status     String?
 }
-
-
 
 type FolhaSalarios {
-  data       DateTime? @db.Date
-  decimo     Float?
-  ferias     Float?
-  fgts       Float?
-  pago       Boolean?
-  sal_id     String?
-  valor      Float?
-  referencia String?
+    data       DateTime? @db.Date
+    decimo     Float?
+    ferias     Float?
+    fgts       Float?
+    pago       Boolean?
+    sal_id     String?
+    valor      Float?
+    referencia String?
 }
 
-
-
 model folha {
-  id         String          @id @default(auto()) @map("_id") @db.ObjectId
-  conta      String
-  funcao     String
-  modalidade String
-  nome       String
-  salarios   FolhaSalarios[]
+    id         String          @id @default(auto()) @map("_id") @db.ObjectId
+    conta      String
+    funcao     String
+    modalidade String
+    nome       String
+    salarios   FolhaSalarios[]
 }

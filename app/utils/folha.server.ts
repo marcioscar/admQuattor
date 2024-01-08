@@ -38,11 +38,31 @@ export const groupSalarioAreas = async (ref: string) => {
       return {
         mod: key,
         valor: _.sumBy(objs, "salarios.valor"),
+        mes: ref
       };
     })
     .value();
   return _.orderBy(total, ["valor"], ["desc"]);
 };
+
+export const groupSalarioAreasTotal = async () => {
+  const sal = await prisma.folha.aggregateRaw({
+    pipeline: [{ $unwind: "$salarios" }],
+  });
+  
+  let total = _(sal)
+    .groupBy("modalidade")
+    .map((objs, key) => {
+      return {
+        mod: key,
+        valor: _.sumBy(objs, "salarios.valor"),
+        // mes: ref
+      };
+    })
+    .value();
+  return _.orderBy(total, ["valor"], ["desc"]);
+};
+
 export const SalarioAreas = async () => {
   const modalidade = await prisma.folha.aggregateRaw({
     pipeline: [
@@ -60,18 +80,18 @@ export const SalarioAreas = async () => {
     Object.assign(
       {},
       o,
-      o._id[0] === "jan-2023" && { mes: 1 },
-      o._id[0] === "fev-2023" && { mes: 2 },
-      o._id[0] === "mar-2023" && { mes: 3 },
-      o._id[0] === "abr-2023" && { mes: 4 },
-      o._id[0] === "mai-2023" && { mes: 5 },
-      o._id[0] === "jun-2023" && { mes: 6 },
-      o._id[0] === "jul-2023" && { mes: 7 },
-      o._id[0] === "ago-2023" && { mes: 8 },
-      o._id[0] === "set-2023" && { mes: 9 },
-      o._id[0] === "out-2023" && { mes: 10 },
-      o._id[0] === "nov-2023" && { mes: 11 },
-      o._id[0] === "dez-2023" && { mes: 12 }
+      o._id[0] === "jan-2024" && { mes: 1 },
+      o._id[0] === "fev-2024" && { mes: 2 },
+      o._id[0] === "mar-2024" && { mes: 3 },
+      o._id[0] === "abr-2024" && { mes: 4 },
+      o._id[0] === "mai-2024" && { mes: 5 },
+      o._id[0] === "jun-2024" && { mes: 6 },
+      o._id[0] === "jul-2024" && { mes: 7 },
+      o._id[0] === "ago-2024" && { mes: 8 },
+      o._id[0] === "set-2024" && { mes: 9 },
+      o._id[0] === "out-2024" && { mes: 10 },
+      o._id[0] === "nov-2024" && { mes: 11 },
+      o._id[0] === "dez-2024" && { mes: 12 }
     )
   );
   return _.orderBy(modal, ["mes"]);

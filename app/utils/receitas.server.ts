@@ -1,10 +1,13 @@
 import { prisma } from "./prisma.server";
 import type { ReceitaForm } from "./types.server";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
 
-export const getReceitas = async () => {
+export const getReceitas = async (ano:string) => {
   return prisma.receitas.findMany({
+    where: {
+      data: {
+        contains: ano,
+      },
+    },
     orderBy: {
       valor: "asc",
     },
@@ -24,6 +27,7 @@ export const getRecebidos = async () => {
   });
 };
 
+
 // export const getReceitas = async () => {
 //   return prisma.receitas.findMany({
 //     orderBy: {
@@ -34,32 +38,41 @@ export const getRecebidos = async () => {
 
 export const groupReceitasAgrupadas = async (ref: string) => {
   switch (ref) {
-    case "abr-2023":
-      ref = "04/2023";
+    case "jan-2024":
+      ref = "01/2024";
       break;
-    case "mai-2023":
-      ref = "05/2023";
+    case "fev-2023":
+      ref = "02/2024";
       break;
-    case "jun-2023":
-      ref = "06/2023";
+    case "mar-2024":
+      ref = "03/2024";
       break;
-    case "jul-2023":
-      ref = "07/2023";
+    case "abr-2024":
+      ref = "04/2024";
       break;
-    case "ago-2023":
-      ref = "08/2023";
+    case "mai-2024":
+      ref = "05/2024";
       break;
-    case "set-2023":
-      ref = "09/2023";
+    case "jun-2024":
+      ref = "06/2024";
       break;
-    case "out-2023":
-      ref = "10/2023";
+    case "jul-2024":
+      ref = "07/2024";
       break;
-    case "nov-2023":
-      ref = "11/2023";
+    case "ago-2024":
+      ref = "08/2024";
       break;
-    case "dez-2023":
-      ref = "12/2023";
+    case "set-2024":
+      ref = "09/2024";
+      break;
+    case "out-2024":
+      ref = "10/2024";
+      break;
+    case "nov-2024":
+      ref = "11/2024";
+      break;
+    case "dez-2024":
+      ref = "12/2024";
       break;
   }
   return prisma.receitas.aggregate({
@@ -88,32 +101,41 @@ export const groupReceitasMes = async (ref: string) => {
 
 export const receitasPorCentroData = async (ref: string) => {
   switch (ref) {
-    case "abr-2023":
-      ref = "04/2023";
+    case "jan-2024":
+      ref = "01/2024";
       break;
-    case "mai-2023":
-      ref = "05/2023";
+    case "fev-2023":
+      ref = "02/2024";
       break;
-    case "jun-2023":
-      ref = "06/2023";
+    case "mar-2024":
+      ref = "03/2024";
       break;
-    case "jul-2023":
-      ref = "07/2023";
+    case "abr-2024":
+      ref = "04/2024";
       break;
-    case "ago-2023":
-      ref = "08/2023";
+    case "mai-2024":
+      ref = "05/2024";
       break;
-    case "set-2023":
-      ref = "09/2023";
+    case "jun-2024":
+      ref = "06/2024";
       break;
-    case "out-2023":
-      ref = "10/2023";
+    case "jul-2024":
+      ref = "07/2024";
       break;
-    case "nov-2023":
-      ref = "11/2023";
+    case "ago-2024":
+      ref = "08/2024";
       break;
-    case "dez-2023":
-      ref = "12/2023";
+    case "set-2024":
+      ref = "09/2024";
+      break;
+    case "out-2024":
+      ref = "10/2024";
+      break;
+    case "nov-2024":
+      ref = "11/2024";
+      break;
+    case "dez-2024":
+      ref = "12/2024";
       break;
   }
   return prisma.receitas.groupBy({
