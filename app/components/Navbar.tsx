@@ -50,7 +50,7 @@ export function Navbar() {
 					</NavLink>
 				</div>
 				<div className='flex space-x-4 '>
-					<div className=' shadow-inner text-white bg-emerald-600 hover:bg-emerald-800  rounded-lg text-sm px-5 py-2.5 '>
+					<div className=' text-white  bg-orange-500 hover:bg-orange-700  rounded-lg text-sm px-5 py-2.5 '>
 						<NavLink
 							to='/novo'
 							className={({ isActive }) =>
@@ -60,7 +60,7 @@ export function Navbar() {
 						</NavLink>
 					</div>
 					<Form method='post' action='/logout' id='logout-form'>
-						<button className=' text-white bg-amber-600 hover:bg-amber-800   rounded-lg text-sm px-5 py-2.5 '>
+						<button className=' text-white bg-stone-500 hover:bg-stone-600   rounded-lg text-sm px-5 py-2.5 '>
 							Sair
 						</button>
 					</Form>

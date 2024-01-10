@@ -300,8 +300,8 @@ export default function Fluxomes(
 
 	return (
 		<div>
-			<Table>
-				<TableHeader>
+			<Table className='border border-stone-100  '>
+				<TableHeader className='bg-stone-200'>
 					<TableRow>
 						<TableHead className='font-medium text-center'>Conta</TableHead>
 						<TableHead className='font-medium text-right'>
@@ -312,7 +312,7 @@ export default function Fluxomes(
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>Receita | Faturamento</TableCell>
 						<TableCell className='font-medium text-right font-mono'>
 							{receitaMesEstimada.toLocaleString("pt-br", {
@@ -328,7 +328,7 @@ export default function Fluxomes(
 							})}
 						</TableCell>
 					</TableRow>
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>Receitas com serviços</TableCell>
 						<TableCell className='font-medium text-right font-mono'>
 							{receitaMesEstimada.toLocaleString("pt-br", {
@@ -377,7 +377,7 @@ export default function Fluxomes(
 						</TableRow>
 					))}
 
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>Custos Variáveis</TableCell>
 						<TableCell className='font-medium font-mono  text-right'>
 							{DespesasVariavelTotal(despesasMes).toLocaleString("pt-br", {
@@ -408,7 +408,7 @@ export default function Fluxomes(
 							</TableCell>
 						</TableRow>
 					))}
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>
 							Margem de Contribuição
 						</TableCell>
@@ -438,7 +438,7 @@ export default function Fluxomes(
 							)}
 						</TableCell>
 					</TableRow>
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>Despesas Fixas</TableCell>
 						<TableCell className='font-mono text-right'>
 							{DespesasFixasTotal(despesasMes, TotSalMes).toLocaleString(
@@ -476,7 +476,7 @@ export default function Fluxomes(
 							</TableCell>
 						</TableRow>
 					))}
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>Salários</TableCell>
 						<TableCell className='font-mono text-right'>
 							{TotSalMes.toLocaleString("pt-br", {
@@ -489,6 +489,7 @@ export default function Fluxomes(
 								style: "percent",
 							}).format(TotSalMes / receitaMes)}
 						</TableCell>
+						<TableCell></TableCell>
 					</TableRow>
 					{salarioAeas.map((s: any) => (
 						<TableRow key={s.mod}>
@@ -506,7 +507,7 @@ export default function Fluxomes(
 							</TableCell>
 						</TableRow>
 					))}
-					<TableRow>
+					<TableRow className='bg-stone-100'>
 						<TableCell className='font-medium'>Lucro Operacional</TableCell>
 						<TableCell className='font-mono text-right'>
 							{LucroOpf(

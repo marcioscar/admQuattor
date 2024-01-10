@@ -3,10 +3,22 @@ import type { DespesaForm } from "./types.server";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
-export const getDespesas = async () => {
+export const getDespesas = async (ano:string) => {
   return prisma.despesas.findMany({
+    where: {
+      referencia: {
+        contains: ano,
+      },
+    },
     orderBy: {
-      data: "desc",
+      data: "asc",
+    },
+  });
+};
+export const getContas = async () => {
+  return prisma.contas.findMany({
+    orderBy: {
+      conta: "asc",
     },
   });
 };
@@ -118,13 +130,25 @@ export const totTipoDespesasFixa = async (ref: string) => {
   return despesasTipo;
 };
 
-export const createDespesa = async (despesa: DespesaForm) => {
+export const createConta = async (conta:any)=>{
+const contal = conta.conta.toLowerCase()
+
+const newConta = await prisma.contas.create({
+    data:{
+        conta: contal,
+        etiqueta: contal.charAt(0).toUpperCase() + contal.slice(1)
+    }
+})
+return newConta
+}
+
+export const createDespesa = async (despesa: any) => {
   const dt = new Date(despesa.data);
   const dataAtual = new Date(dt.valueOf() + dt.getTimezoneOffset() * 60 * 1000);
   const referencia = format(dataAtual, "MMM-yyyy", { locale: pt });
   const newDespesa = await prisma.despesas.create({
     data: {
-      conta: despesa.conta,
+      conta: despesa.conta.charAt(0).toUpperCase() + despesa.conta.slice(1),
       data: dataAtual,
       referencia: referencia,
       tipo: despesa.tipo,
@@ -142,7 +166,7 @@ export const updateDespesa = async (despesa: DespesaForm) => {
       id: despesa.id,
     },
     data: {
-      conta: despesa.conta,
+      conta: despesa.conta.charAt(0).toUpperCase() + despesa.conta.slice(1),
       data: dataAtual,
       referencia: referencia,
       tipo: despesa.tipo,

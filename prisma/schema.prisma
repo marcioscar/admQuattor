@@ -65,3 +65,10 @@ model folha {
     nome       String
     salarios   FolhaSalarios[]
 }
+
+model contas {
+    id       String  @id @default(auto()) @map("_id") @db.ObjectId
+    etiqueta String
+    conta    String
+    tipo     String?
+}

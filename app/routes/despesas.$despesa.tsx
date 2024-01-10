@@ -12,16 +12,33 @@ import {
 	getDespesa,
 	updateDespesa,
 	deleteDespesa,
+	getContas,
 } from "~/utils/despesas.server";
+import {
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+} from "@/components/ui/command";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 
 // import { deleteDespesa } from "../../utils/despesas.server";
 import Modal from "~/components/Modal";
 import { RiCloseCircleFill } from "react-icons/ri";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
 	const despesa = await getDespesa(params.despesa as string);
-
-	return json({ despesa });
+	const contas = await getContas();
+	return json({ despesa, contas });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -46,7 +63,9 @@ export default function Despesa() {
 	function closeHandler() {
 		navigate("..");
 	}
-	const { despesa } = useLoaderData();
+	const { despesa, contas } = useLoaderData<typeof loader>();
+	const [open, setOpen] = useState(false);
+	const [value, setValue] = useState(despesa?.conta.toLowerCase());
 
 	return (
 		<Modal onClose={closeHandler}>
@@ -66,16 +85,66 @@ export default function Despesa() {
 					method='post'
 					className='rounded-2xl bg-gray-200 p-6 w-96'>
 					<input hidden type='text' name='id' defaultValue={despesa?.id} />
+					<input
+						type='text'
+						hidden
+						id='conta'
+						name='conta'
+						value={value}
+						readOnly
+					/>
 					<label htmlFor='conta' className='text-blue-600 font-semibold'>
 						Conta
 					</label>
-					<input
+					<div className='mb-3 w-full'>
+						<Popover open={open} onOpenChange={setOpen}>
+							<PopoverTrigger asChild>
+								<Button
+									variant='outline'
+									role='combobox'
+									aria-expanded={open}
+									className='w-full justify-between'>
+									{value
+										? contas.find((contas: any) => contas.conta === value)
+												?.etiqueta
+										: "Selecione a Conta..."}
+									<ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent id='conta' className='w-full p-2 rounded-xl my-2'>
+								<Command id='conta'>
+									<CommandInput placeholder='Procurar conta...' />
+									<CommandEmpty>Conta não encontrada</CommandEmpty>
+									<CommandGroup>
+										{contas.map((contas: any) => (
+											<CommandItem
+												key={contas.conta}
+												value={contas.conta}
+												onSelect={(currentValue) => {
+													setValue(currentValue === value ? "" : currentValue);
+													setOpen(false);
+												}}>
+												<Check
+													className={cn(
+														"mr-2 h-4 w-4",
+														value === contas.conta ? "opacity-100" : "opacity-0"
+													)}
+												/>
+												{contas.etiqueta}
+											</CommandItem>
+										))}
+									</CommandGroup>
+								</Command>
+							</PopoverContent>
+						</Popover>
+					</div>
+					{/* <input
 						type='text'
 						id='conta'
 						name='conta'
 						defaultValue={despesa?.conta}
 						className='w-full p-2 rounded-xl my-2'
-					/>
+					/> */}
 					<label htmlFor='valor' className='text-blue-600 font-semibold'>
 						Valor
 					</label>
