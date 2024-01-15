@@ -8,6 +8,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // type Salarios = {
 // 	_id: string;
@@ -86,6 +92,20 @@ export default function Fluxomes(
 			}
 		);
 		return _.orderBy(tot, ["valor"], ["desc"]);
+	}
+
+	function grupodespesas(mes: any, conta: any) {
+		const desp = _.groupBy(
+			despesas.filter(
+				(o: { referencia: string; tipo: string; conta: string }) =>
+					o.referencia.includes("jan-2024") &&
+					o.tipo.includes("fixa") &&
+					o.conta.includes(conta)
+			),
+			"conta"
+		);
+
+		return _.flatten(_.values(desp));
 	}
 
 	//Saldos
@@ -461,7 +481,38 @@ export default function Fluxomes(
 					{DespFixasMes.map((f: any, index) => (
 						<TableRow key={index}>
 							<TableCell className='font-thin text-sm pl-6'>
-								{f.conta}
+								<Accordion className='p-0' type='single' collapsible>
+									<AccordionItem value='desp'>
+										{grupodespesas(mesAnoNome, f.conta).length >= 1 &&
+										grupodespesas(mesAnoNome, f.conta)
+											.map((g) => g.descricao)
+											.toString() !== "" ? (
+											<AccordionTrigger className='font-light  '>
+												{f.conta}
+											</AccordionTrigger>
+										) : (
+											f.conta
+										)}
+
+										{grupodespesas(mesAnoNome, f.conta).map((g) => (
+											<AccordionContent key={f.conta}>
+												{grupodespesas(mesAnoNome, f.conta).length >= 1 &&
+													g.descricao !== null && (
+														<div className=' grid grid-cols-2'>
+															<div>{g.descricao}</div>
+															<div className='  text-end'>
+																{g.valor.toLocaleString("pt-br", {
+																	minimumFractionDigits: 2,
+																	maximumFractionDigits: 2,
+																})}
+															</div>
+														</div>
+													)}
+											</AccordionContent>
+										))}
+									</AccordionItem>
+								</Accordion>
+								{/* {f.conta} */}
 							</TableCell>
 							<TableCell className='font-mono text-right'>
 								{f.valor.toLocaleString("pt-br", {

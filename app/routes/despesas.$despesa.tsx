@@ -26,6 +26,16 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 
 // import { deleteDespesa } from "../../utils/despesas.server";
 import Modal from "~/components/Modal";
@@ -34,6 +44,8 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
 	const despesa = await getDespesa(params.despesa as string);
@@ -51,6 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
 		await updateDespesa(values);
 	} else {
 		// @ts-ignore
+
 		await deleteDespesa(values);
 	}
 
@@ -69,7 +82,6 @@ export default function Despesa() {
 
 	return (
 		<Modal onClose={closeHandler}>
-			{/* <Navbar /> */}
 			<div className='h-full justify-center items-center flex flex-col gap-y-4'>
 				<div className='flex items-center space-x-4'>
 					<h2 className='text-2xl font-extrabold text-slate-700'>
@@ -93,7 +105,7 @@ export default function Despesa() {
 						value={value}
 						readOnly
 					/>
-					<label htmlFor='conta' className='text-blue-600 font-semibold'>
+					<label htmlFor='conta' className='text-stone-600 font-semibold'>
 						Conta
 					</label>
 					<div className='mb-3 w-full'>
@@ -138,24 +150,27 @@ export default function Despesa() {
 							</PopoverContent>
 						</Popover>
 					</div>
-					{/* <input
+					<label htmlFor='descricao' className='text-stone-600 font-semibold'>
+						Descrição
+					</label>
+					<Input
 						type='text'
-						id='conta'
-						name='conta'
-						defaultValue={despesa?.conta}
-						className='w-full p-2 rounded-xl my-2'
-					/> */}
-					<label htmlFor='valor' className='text-blue-600 font-semibold'>
+						name='descricao'
+						id='descricao'
+						className='bg-white mb-2'
+						defaultValue={despesa?.descricao}></Input>
+
+					<label htmlFor='valor' className='text-stone-600 font-semibold'>
 						Valor
 					</label>
-					<input
-						className='w-full p-2 rounded-xl my-2'
+					<Input
+						className='w-full bg-white mb-2'
 						placeholder='Valor'
 						name='valor'
 						defaultValue={(despesa?.valor).toLocaleString()}
 					/>
 
-					<label htmlFor='password' className='text-blue-600 font-semibold'>
+					<label htmlFor='password' className='text-stone-600 font-semibold'>
 						Data
 					</label>
 					<input
@@ -167,14 +182,14 @@ export default function Despesa() {
 							.toISOString()
 							.substring(0, 10)}
 					/>
-					<label htmlFor='tipo' className='text-blue-600 font-semibold'>
+					<label htmlFor='tipo' className='text-stone-600 font-semibold'>
 						Tipo
 					</label>
 					<select
 						id='tipo'
 						name='tipo'
 						defaultValue={despesa?.tipo}
-						className='bg-gray-50 border p-2 my-2 border-gray-300 text-gray-900 mb-6  rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'>
+						className='bg-gray-50 border p-2 my-2 border-gray-300 text-gray-900 mb-6  rounded-lg focus:ring-stone-500 focus:border-stone-500 block w-full  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-stone-500 dark:focus:border-stone-500'>
 						<option value='fixa'>Fixa</option>
 						<option value='variavel'>Variável</option>
 					</select>
@@ -182,20 +197,64 @@ export default function Despesa() {
 					<div className='w-full text-center space-x-5'>
 						<button
 							type='submit'
-							className='rounded-xl mt-2 bg-blue-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-blue-700 hover:-translate-y-1'
+							className='rounded-xl mt-2 bg-stone-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-stone-700 hover:-translate-y-1'
 							name='_action'
 							value='save'>
 							{transition.state === "submitting"
 								? "Cadastrando..."
 								: "Cadastrar"}
 						</button>
-						<button
+						<Dialog>
+							<DialogTrigger asChild>
+								<Button className='rounded-xl mt-2 bg-red-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-red-700 hover:-translate-y-1'>
+									Apagar
+								</Button>
+							</DialogTrigger>
+
+							<DialogContent>
+								<Form method='post'>
+									<DialogHeader>
+										<DialogTitle className=' text-stone-600'>
+											Tem Certeza que quer apagar
+										</DialogTitle>
+										<Separator className='my-4' />
+										<DialogDescription className='mt-8'>
+											<div className='flex h-5 items-center space-x-4 text-sm'>
+												<div>{despesa?.conta}</div>
+												<Separator orientation='vertical' />
+												<div>{despesa?.descricao}</div>
+											</div>
+										</DialogDescription>
+									</DialogHeader>
+									<input
+										hidden
+										type='text'
+										name='id'
+										defaultValue={despesa?.id}
+									/>
+									<DialogFooter>
+										<DialogClose asChild>
+											<button
+												type='submit'
+												className='rounded-xl mt-2 bg-red-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-red-700 hover:-translate-y-1'
+												name='_action'
+												value='delete'>
+												{transition.state === "submitting"
+													? "Apagando..."
+													: "Apagar"}
+											</button>
+										</DialogClose>
+									</DialogFooter>
+								</Form>
+							</DialogContent>
+						</Dialog>
+						{/* <button
 							type='submit'
 							className='rounded-xl mt-2 bg-red-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-red-700 hover:-translate-y-1'
 							name='_action'
 							value='delete'>
 							{transition.state === "submitting" ? "Apagando..." : "Apagar"}
-						</button>
+						</button> */}
 					</div>
 				</Form>
 			</div>

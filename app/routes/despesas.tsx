@@ -6,6 +6,8 @@ import { getDespesas } from "~/utils/despesas.server";
 import type { tipoDesp } from "~/utils/types.server";
 import { useState } from "react";
 import { requireUserSession } from "~/utils/auth.server";
+import format from "date-fns/format";
+import ptBR from "date-fns/locale/pt-BR";
 
 export const loader: LoaderFunction = async ({ request }) => {
 	await requireUserSession(request);
@@ -19,9 +21,10 @@ export default function Despesas() {
 	const [filtrar, setFiltrar] = useState("");
 
 	const despesaFilter = despesas?.filter(
-		(despesas: { conta: string; data: any }) =>
+		(despesas: { conta: string; data: any; descricao: any }) =>
 			despesas.conta.toLowerCase().includes(filtrar.toLowerCase()) ||
-			despesas.data.toLowerCase().includes(filtrar)
+			despesas.data.toLowerCase().includes(filtrar) ||
+			despesas.descricao?.toLowerCase().includes(filtrar)
 	);
 
 	return (
@@ -72,6 +75,12 @@ export default function Despesas() {
 								Conta
 							</th>
 							<th scope='col' className='px-6 py-3'>
+								Descrição
+							</th>
+							<th scope='col' className='px-6 py-3'>
+								Mês
+							</th>
+							<th scope='col' className='px-6 py-3'>
 								Data
 							</th>
 							<th scope='col' className='px-6 py-3 text-right'>
@@ -95,7 +104,11 @@ export default function Despesas() {
 									className='px-6  font-medium text-gray-900 whitespace-nowrap'>
 									{desp.conta}
 								</th>
+								<td className='px-6 py-3 '>{desp.descricao}</td>
 								<td className='px-6 py-3 '>{desp.referencia}</td>
+								<td className='px-6 py-3 '>
+									{format(new Date(desp.data), "dd - MMM", { locale: ptBR })}
+								</td>
 								<td className='px-6  text-right'>{desp.tipo}</td>
 								<td className='px-6  text-right '>
 									{desp.valor.toLocaleString("pt-br", {

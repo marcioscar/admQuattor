@@ -149,6 +149,7 @@ export const createDespesa = async (despesa: any) => {
   const newDespesa = await prisma.despesas.create({
     data: {
       conta: despesa.conta.charAt(0).toUpperCase() + despesa.conta.slice(1),
+      descricao: despesa.descricao,
       data: dataAtual,
       referencia: referencia,
       tipo: despesa.tipo,
@@ -168,6 +169,7 @@ export const updateDespesa = async (despesa: DespesaForm) => {
     data: {
       conta: despesa.conta.charAt(0).toUpperCase() + despesa.conta.slice(1),
       data: dataAtual,
+      descricao: despesa.descricao,
       referencia: referencia,
       tipo: despesa.tipo,
       valor: parseFloat(despesa.valor.replace(".", "").replace(",", ".")),

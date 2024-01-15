@@ -17,9 +17,22 @@ import {
 import Modal from "~/components/Modal";
 
 import { RiCloseCircleFill } from "react-icons/ri";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
 	const receita = await getReceita(params.receita as string);
+
 	return json({ receita });
 };
 
@@ -45,7 +58,7 @@ export default function Receita() {
 	function closeHandler() {
 		navigate("..");
 	}
-	const { receita } = useLoaderData();
+	const { receita } = useLoaderData<typeof loader>();
 
 	return (
 		<Modal onClose={closeHandler}>
@@ -122,13 +135,62 @@ export default function Receita() {
 								? "Cadastrando..."
 								: "Cadastrar"}
 						</button>
-						<button
+						<Dialog>
+							<DialogTrigger asChild>
+								<Button className='rounded-xl mt-2 bg-red-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-red-700 hover:-translate-y-1'>
+									Apagar
+								</Button>
+							</DialogTrigger>
+							<DialogContent>
+								<Form method='post'>
+									<DialogHeader>
+										<DialogTitle className=' text-stone-600'>
+											Tem Certeza que quer apagar
+										</DialogTitle>
+										<Separator className='my-4' />
+										<DialogDescription className='mt-8'>
+											<div className='flex h-5 items-center space-x-4 text-sm'>
+												<div>{receita?.centro}</div>
+												<Separator orientation='vertical' />
+												<div>
+													R$
+													{receita?.valor.toLocaleString("pt-br", {
+														minimumFractionDigits: 2,
+														maximumFractionDigits: 2,
+													})}
+												</div>
+											</div>
+										</DialogDescription>
+									</DialogHeader>
+									<input
+										hidden
+										type='text'
+										name='id'
+										defaultValue={receita?.id}
+									/>
+									<DialogFooter>
+										<DialogClose asChild>
+											<button
+												type='submit'
+												className='rounded-xl mt-2 bg-red-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-red-700 hover:-translate-y-1'
+												name='_action'
+												value='delete'>
+												{transition.state === "submitting"
+													? "Apagando..."
+													: "Apagar"}
+											</button>
+										</DialogClose>
+									</DialogFooter>
+								</Form>
+							</DialogContent>
+						</Dialog>
+						{/* <button
 							type='submit'
 							className='rounded-xl mt-2 bg-red-500 text-white px-3 py-2 font-semibold transition duration-300 ease-in-out hover:bg-red-700 hover:-translate-y-1'
 							name='_action'
 							value='delete'>
 							{transition.state === "submitting" ? "Apagando..." : "Apagar"}
-						</button>
+						</button> */}
 					</div>
 				</Form>
 			</div>

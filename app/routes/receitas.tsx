@@ -1,4 +1,4 @@
-import type { LoaderFunction, ActionArgs } from "@remix-run/node";
+import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -14,7 +14,7 @@ import {
 	RiSearch2Line,
 } from "react-icons/ri";
 
-export async function action({ request }: ActionArgs) {
+export async function action({ request }: any) {
 	const formData = await request.formData();
 	await baixarReceita(formData.get("_id"));
 	return redirect(``);
@@ -34,7 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 	return json({ receitas });
 };
 export default function Receitas() {
-	const { receitas } = useLoaderData();
+	const { receitas } = useLoaderData<typeof loader>();
 	const dataAtual = format(new Date(), "dd/MM/yyyy");
 	const [filtrar, setFiltrar] = useState("");
 	const [filtrardt1, setFiltrardt1] = useState(dataAtual);

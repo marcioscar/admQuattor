@@ -37,6 +37,7 @@ import {
 	DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const contas = await getContas();
@@ -138,9 +139,7 @@ export default function New() {
 						value={value}
 						readOnly
 					/>
-					{/* <label htmlFor='conta' className='text-blue-600 font-semibold'>
-						Conta
-					</label> */}
+
 					<div className='mb-3 w-full'>
 						<Popover open={open} onOpenChange={setOpen}>
 							<PopoverTrigger asChild>
@@ -182,34 +181,35 @@ export default function New() {
 							</PopoverContent>
 						</Popover>
 					</div>
-
-					{/* <input
+					<label htmlFor='descricao' className='text-stone-600 font-semibold'>
+						Descrição
+					</label>
+					<Input
 						type='text'
-						id='conta'
-						name='conta'
-						className='w-full p-2 rounded-xl my-2'
-					/> */}
-					<label htmlFor='valor' className='text-blue-600 font-semibold'>
+						name='descricao'
+						id='descricao'
+						className='bg-white'></Input>
+					<label htmlFor='valor' className='text-stone-600 font-semibold'>
 						Valor
 					</label>
 					<Cleave
-						className='w-full p-2 rounded-xl my-2'
+						className='w-full p-2 rounded my-1'
 						placeholder='Valor'
 						name='valor'
 						options={{ numeral: true, numeralDecimalMark: ",", delimiter: "." }}
 					/>
 
-					<label htmlFor='password' className='text-blue-600 font-semibold'>
+					<label htmlFor='password' className='text-stone-600 font-semibold'>
 						Data
 					</label>
-					<input
+					<Input
 						type='date'
 						id='data'
 						name='data'
-						className='w-full p-2 rounded-xl my-2'
+						className='w-full bg-white '
 						defaultValue={new Date().toISOString().substring(0, 10)}
 					/>
-					<label htmlFor='tipo' className='text-blue-600 font-semibold'>
+					<label htmlFor='tipo' className='text-stone-600 font-semibold'>
 						Tipo
 					</label>
 					<select

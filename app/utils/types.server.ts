@@ -4,9 +4,11 @@ export type DespesaForm = {
   tipo: string;
   valor: string;
   id?: string;
+  descricao? : string
 };
 
 export type tipoDesp = {
+  descricao: string;
   _sum: any;
   id: string;
   conta: string;

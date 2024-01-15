@@ -22,6 +22,7 @@ model User {
 model despesas {
     id         String   @id @default(auto()) @map("_id") @db.ObjectId
     conta      String
+    descricao  String?
     data       DateTime
     tipo       String
     valor      Float
