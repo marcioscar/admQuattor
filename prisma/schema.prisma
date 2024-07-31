@@ -37,9 +37,9 @@ model despesas {
 //   referencia String?
 // }
 model receitas {
-    id         String  @id @default(auto()) @map("_id") @db.ObjectId
-    centro     String
-    data       String
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    centro     String?
+    data       DateTime
     valor      Float
     referencia String?
     forma      String?

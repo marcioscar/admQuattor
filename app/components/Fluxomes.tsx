@@ -246,6 +246,7 @@ export default function Fluxomes(
 	const despesasMes = despMes(mesAnoNome); //ok
 
 	const DespFixasMes = despTipo(mesAnoNome, "fixa"); //ok
+	console.log(DespFixasMes);
 
 	const TotSal = parseFloat(
 		_.filter(TotSalarios, ["_id", mesAnoNome])

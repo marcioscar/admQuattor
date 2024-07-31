@@ -15,6 +15,16 @@ export const getDespesas = async (ano:string) => {
     },
   });
 };
+
+export const getDespesasNova = async () => {
+  return prisma.despesas.findMany({
+   
+    
+    orderBy: {
+      data: "asc",
+    },
+  });
+};
 export const getContas = async () => {
   return prisma.contas.findMany({
     orderBy: {

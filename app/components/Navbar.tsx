@@ -41,13 +41,20 @@ export function Navbar() {
 						}>
 						FOLHA
 					</NavLink>
-					<NavLink
+					{/* <NavLink
 						to='/cashflow'
 						className={({ isActive }) =>
 							isActive ? activeClassName : undefined
 						}>
 						FLUXO
 					</NavLink>
+					<NavLink
+						to='/results'
+						className={({ isActive }) =>
+							isActive ? activeClassName : undefined
+						}>
+						RESULTADOS
+					</NavLink> */}
 				</div>
 				<div className='flex space-x-4 '>
 					<div className=' text-white  bg-orange-500 hover:bg-orange-700  rounded-lg text-sm px-5 py-2.5 '>

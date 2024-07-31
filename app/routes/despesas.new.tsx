@@ -86,7 +86,7 @@ export default function New() {
 						<DrawerTrigger>
 							<Button variant='outline'>Nova Conta</Button>
 						</DrawerTrigger>
-						<DrawerContent>
+						<DrawerContent className=' h-3/4'>
 							<div className='mx-auto w-full max-w-md'>
 								<Form method='post'>
 									<DrawerHeader className=' mx-auto w-full  place-content-center'>

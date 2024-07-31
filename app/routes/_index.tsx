@@ -1,30 +1,19 @@
-import { Navbar } from "~/components/Navbar";
-import type { LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import {
-	groupReceitasAgrupadas,
-	receitasPorCentroData,
-} from "~/utils/receitas.server";
-import { useLoaderData, useFetcher } from "@remix-run/react";
-import {
-	totDespesas,
-	DespesasMes,
-	totTipoDespesas,
-	totTipoDespesasFixa,
-} from "../utils/despesas.server";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
-import type { tipoRec, tipoDesp } from "~/utils/types.server";
-import { Arrow } from "~/utils/icons";
-import * as icons from "../utils/icons";
-import {
-	groupSalario,
-	groupSalarioAreas,
-	SalarioAreas,
-} from "~/utils/folha.server";
+import { Navbar } from "@/components/Navbar";
+import Resultados from "@/components/Resultados";
+import { getReceitas } from "@/utils/receitas.server";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { IoMdArrowDropright } from "react-icons/io";
+import { format, getDay, getMonth, getYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { requireUserSession } from "@/utils/auth.server";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import _ from "lodash";
+import { getDespesasNova } from "@/utils/despesas.server";
+import { Chart as ChartJS } from "chart.js/auto";
 import {
-	Chart as ChartJS,
 	CategoryScale,
 	LinearScale,
 	BarElement,
@@ -33,290 +22,165 @@ import {
 	Title,
 	Tooltip,
 	Legend,
+	PieController,
 } from "chart.js";
-import { Line, Bar } from "react-chartjs-2";
-import { requireUserSession } from "~/utils/auth.server";
-import { Button } from "ui-neumorphism";
+import { Line, Doughnut } from "react-chartjs-2";
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+import {
+	groupSalario,
+	groupSalarioAreas,
+	SalarioAreasNovo,
+} from "@/utils/folha.server";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	await requireUserSession(request);
-
-	const dataAtual = format(new Date(), "MMM-yyyy", { locale: pt });
 	const url = new URL(request.url);
+	const dataAtual = format(new Date(), "MMM-yyyy", { locale: ptBR });
+
 	const par = url.searchParams.get("rec");
-	let parametro = par ? par : dataAtual;
+	const ano = getYear(new Date());
 
-	const totReceitas = await groupReceitasAgrupadas(String(parametro));
+	const mesnome =
+		new Date(`2024/${par}`)
+			.toLocaleString("pt-BR", {
+				month: "short",
+			})
+			.slice(-4, -1) +
+		"-" +
+		ano;
+	let parametro = par ? mesnome : dataAtual;
 
-	// const ReceitasM = await ReceitasMes(String(parametro));
-	const ReceitasM = await receitasPorCentroData(String(parametro));
-
-	const DespesasM = await DespesasMes(String(parametro));
-	const TotDespesas = await totDespesas(String(parametro));
+	const receitas = await getReceitas();
+	const despesas = await getDespesasNova();
 	const TotSalarios = await groupSalario();
-	const TotSalMes = _.filter(TotSalarios, ["_id", parametro]);
 	const salAreas = await groupSalarioAreas(parametro);
-	const totTipoDesp = await totTipoDespesasFixa(parametro);
+	const areas = await SalarioAreasNovo();
 
-	const areas = await SalarioAreas();
-
-	return json({
-		totReceitas,
-		TotDespesas,
-		ReceitasM,
-		DespesasM,
-		TotSalarios,
-		TotSalMes,
-		salAreas,
-		totTipoDesp,
-		areas,
-	});
+	return { receitas, despesas, TotSalarios, salAreas, areas };
 };
 
-export default function Index() {
-	const rec = useFetcher();
-	const {
-		totReceitas,
-		TotSalarios,
-		ReceitasM,
-		TotDespesas,
-		DespesasM,
-		TotSalMes,
-		salAreas,
-		areas,
-		totTipoDesp,
-	} = useLoaderData<typeof loader>();
-	const totalRec = rec.data?.totReceitas ? rec.data.totReceitas : totReceitas;
-	const recMes = rec.data?.ReceitasM ? rec.data.ReceitasM : ReceitasM;
+export default function Results() {
+	const { receitas, despesas, TotSalarios, salAreas, areas } =
+		useLoaderData<typeof loader>();
 
-	const totalDesp = rec.data?.TotDespesas ? rec.data.TotDespesas : TotDespesas;
-	const despMes = rec.data?.DespesasM ? rec.data.DespesasM : DespesasM;
-	const totTipoDespesa = rec.data?.totTipoDesp
-		? rec.data.totTipoDesp
-		: totTipoDesp;
-	const TotSalarioMes = rec.data?.TotSalMes ? rec.data.TotSalMes : TotSalMes;
+	const rec = useFetcher();
+
 	const TotSalAreas = rec.data?.salAreas ? rec.data.salAreas : salAreas;
 
-	const DespesasFixas = _.filter(totTipoDespesa, ["tipo", "fixa"]);
-
-	const DespesasVariaveis = _.filter(despMes, ["tipo", "variavel"]);
-	const DespesasFixasTotal = _.sumBy(
-		_.filter(despMes, ["tipo", "fixa"]),
-		"valor"
+	const [numberMounth, setMumberMounth] = useState(
+		format(new Date(), "MM", { locale: ptBR })
 	);
-
-	const DespesasVariavelTotal = _.sumBy(
-		_.filter(despMes, ["tipo", "variavel"]),
-		"valor"
-	);
-
-	const SalDiretos = _.sumBy(
-		_.filter(TotSalAreas, function (o) {
-			return o.mod != "geral";
-		}),
-		"valor"
-	);
-
-	const salariosIndiretos1 =
-		(_.sumBy(
-			_.filter(TotSalAreas, function (o) {
-				return o.mod === "geral";
-			}),
-			"valor"
-		) +
-			_.sumBy(
-				_.filter(totTipoDespesa, function (o) {
-					return o.conta === "Pro-labore";
-				}),
-				"_sum"
-			).valor) /
-		9;
-
-	function salariosIndiretos(alunos: Number) {
-		const salario =
-			(_.sumBy(
-				_.filter(TotSalAreas, function (o) {
-					return o.mod === "geral";
-				}),
-				"valor"
-			) +
-				_.sumBy(
-					_.filter(totTipoDespesa, function (o) {
-						return o.conta === "Pro-labore";
-					}),
-					"_sum"
-				).valor) /
-			1200;
-		return salario * alunos;
-	}
-	console.log(salariosIndiretos(1200));
-
-	function despesasRateio(alunos: Number) {
-		const despesa =
-			(DespesasFixasTotal -
-				_.sumBy(
-					_.filter(totTipoDespesa, function (o) {
-						return o.conta === "Pro-labore";
-					}),
-					"_sum"
-				).valor -
-				_.sumBy(
-					_.filter(totTipoDespesa, function (o) {
-						return o.conta === "GAS";
-					}),
-					"_sum"
-				).valor -
-				_.sumBy(
-					_.filter(totTipoDespesa, function (o) {
-						return o.conta === "FGTS";
-					}),
-					"_sum"
-				).valor -
-				_.sumBy(
-					_.filter(totTipoDespesa, function (o) {
-						return o.conta === "GPS";
-					}),
-					"_sum"
-				).valor) /
-			1200;
-		return despesa * alunos;
-	}
-
-	console.log(
-		despesasRateio(1).toLocaleString("pt-br", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		})
-	);
-
-	const despesasRateio1 =
-		(DespesasFixasTotal -
-			_.sumBy(
-				_.filter(totTipoDespesa, function (o) {
-					return o.conta === "Pro-labore";
-				}),
-				"_sum"
-			).valor -
-			_.sumBy(
-				_.filter(totTipoDespesa, function (o) {
-					return o.conta === "GAS";
-				}),
-				"_sum"
-			).valor -
-			_.sumBy(
-				_.filter(totTipoDespesa, function (o) {
-					return o.conta === "FGTS";
-				}),
-				"_sum"
-			).valor -
-			_.sumBy(
-				_.filter(totTipoDespesa, function (o) {
-					return o.conta === "GPS";
-				}),
-				"_sum"
-			).valor) /
-		1200;
-
-	const gas = _.sumBy(
-		_.filter(totTipoDespesa, function (o) {
-			return o.conta === "GAS";
-		}),
-		"_sum"
-	).valor;
-
-	function salarioArea(area: string) {
-		const salario =
-			_.sumBy(
-				_.filter(TotSalAreas, function (o) {
-					return o.mod === area;
-				}),
-				"valor"
-			) * 1.23;
-		return salario;
-	}
-
-	function encargos(area: string) {
-		const encargos =
-			_.sumBy(
-				_.filter(TotSalAreas, function (o) {
-					return o.mod === area;
-				}),
-				"valor"
-			) * 0.32;
-		return encargos;
-	}
-
-	function salReceitasAreas(area: string) {
-		const rec = _.sumBy(
-			_.filter(recMes, function (o) {
-				return o.centro === area;
-			}),
-			"_sum"
-		);
-		return rec.valor;
-	}
-
-	const PercentFixa = (
-		(SalDiretos + DespesasFixasTotal) /
-		totalRec._sum.valor
-	).toLocaleString("pt-BR", {
-		style: "percent",
-		minimumFractionDigits: 2,
-	});
-
-	const PercentVariavel = (
-		DespesasVariavelTotal / totalRec._sum.valor
-	).toLocaleString("pt-BR", {
-		style: "percent",
-		minimumFractionDigits: 2,
-	});
-	const Mensalidade = (SalDiretos + DespesasFixasTotal) / 1100;
-
-	const Mensalidade6 =
-		Mensalidade * (1 + DespesasVariavelTotal / totalRec._sum.valor) * 1.06;
-
-	const previsao =
-		Mensalidade *
-		(1 + DespesasVariavelTotal / totalRec._sum.valor) *
-		1.06 *
-		1100;
-
-	const Lucro =
-		previsao -
-		previsao * (DespesasVariavelTotal / totalRec._sum.valor) -
-		DespesasFixasTotal -
-		SalDiretos;
-
-	const PontoEquilibrio =
-		(DespesasFixasTotal + SalDiretos) / 1 -
-		DespesasVariavelTotal / totalRec._sum.valor;
-
-	const PontoEquilibrioQtd = PontoEquilibrio / Mensalidade6;
-	const capitalize = (str: string) => {
-		if (typeof str !== "string") {
-			return "";
-		}
-		return str.charAt(0).toUpperCase() + str.substr(1);
+	const handleSelectChange = (event: any) => {
+		rec.submit(event.target.form);
+		setMumberMounth(event.target.value);
 	};
 
-	const TotalSalariosMes = TotSalarios.map((o: any) =>
-		Object.assign(
-			{},
-			o,
-			o._id === "jan-2024" && { mes: 1 },
-			o._id === "fev-2024" && { mes: 2 },
-			o._id === "mar-2024" && { mes: 3 },
-			o._id === "abr-2024" && { mes: 4 },
-			o._id === "mai-2024" && { mes: 5 },
-			o._id === "jun-2024" && { mes: 6 },
-			o._id === "jul-2024" && { mes: 7 },
-			o._id === "ago-2024" && { mes: 8 },
-			o._id === "set-2024" && { mes: 9 },
-			o._id === "out-2024" && { mes: 10 },
-			o._id === "nov-2024" && { mes: 11 },
-			o._id === "dez-2024" && { mes: 12 }
-		)
-	);
+	const ano = getYear(new Date());
+	const mes = getMonth(new Date(`2024/${numberMounth}`)) + 1;
+
+	const mesnome =
+		new Date(`2024/${numberMounth}`)
+			.toLocaleString("pt-BR", {
+				month: "short",
+			})
+			.slice(-4, -1) +
+		"-" +
+		ano;
+
+	//receitas
+	const recMes = _.filter(receitas, (item: any) => {
+		const itemDate = new Date(item.data);
+		return getYear(itemDate) === ano && getMonth(itemDate) + 1 === mes;
+	});
+
+	const recMesTotal = _.sumBy(recMes, "valor");
+
+	function recForma() {
+		const tot = _.map(_.groupBy(recMes, "forma"), (forma, idx) => {
+			return { forma: idx, valor: _.sumBy(forma, "valor") };
+		});
+
+		return _.orderBy(tot, ["valor"], ["desc"]);
+	}
+	function recDiaf() {
+		const tot = _.map(
+			_.groupBy(recMes, (item) => item.data.slice(8, 10)),
+			(dia, idx) => {
+				return { dia: idx, valor: _.sumBy(dia, "valor") };
+			}
+		);
+
+		return _.orderBy(tot, ["valor"], ["desc"]);
+	}
+	const recDia = recDiaf();
+
+	//fim receitas
+
+	//despesas
+	const TotSalMesString = _.filter(TotSalarios, ["_id", mesnome]);
+
+	const TotSalMes = parseFloat(TotSalMesString.map((s) => s?.salario));
+
+	const despMes = _.filter(despesas, (item) => {
+		const itemDate = new Date(item.data);
+		return getYear(itemDate) === ano && getMonth(itemDate) + 1 === mes;
+	});
+
+	//variavel
+	const despMesVariavel = _.filter(despesas, (item) => {
+		const itemDate = new Date(item.data);
+		return (
+			getYear(itemDate) === ano &&
+			getMonth(itemDate) + 1 === mes &&
+			item.tipo === "variavel"
+		);
+	});
+	const despMesTotalVariavel = _.sumBy(despMesVariavel, "valor");
+	//fim variavel
+
+	//fixa
+	const despMesFixa = _.filter(despesas, (item) => {
+		const itemDate = new Date(item.data);
+		return (
+			getYear(itemDate) === ano &&
+			getMonth(itemDate) + 1 === mes &&
+			item.tipo === "fixa"
+		);
+	});
+	const despMesTotalFixa = _.sumBy(despMesFixa, "valor") + TotSalMes;
+
+	//fim fixa
+
+	const despMesTotal = _.sumBy(despMes, "valor");
+
+	function despConta() {
+		const tot = _.map(_.groupBy(despMes, "conta"), (conta, idx) => {
+			return { conta: idx, valor: _.sumBy(conta, "valor") };
+		});
+
+		return _.orderBy(tot, ["valor"], ["desc"]).slice(0, 4);
+	}
+
+	function despDiaf() {
+		const tot = _.map(
+			_.groupBy(despMes, (item) => item.data.slice(8, 10)),
+			(dia, idx) => {
+				return { dia: idx, valor: _.sumBy(dia, "valor") };
+			}
+		);
+
+		return _.orderBy(tot, ["valor"], ["desc"]);
+	}
+	const despDia = despDiaf();
+
+	//fim despesas
+
+	//salarios
+	const areas2024 = _.filter(areas, (item) => {
+		return item.ano === 2024;
+	});
+
+	//graficos
 	ChartJS.register(
 		CategoryScale,
 		LinearScale,
@@ -324,6 +188,9 @@ export default function Index() {
 		BarElement,
 		LineElement,
 		Title,
+		Tooltip,
+		Legend,
+		PieController,
 		Tooltip,
 		Legend
 	);
@@ -335,1074 +202,434 @@ export default function Index() {
 			},
 			title: {
 				display: true,
-				text: "Total de Salários",
+				text:
+					"Total de Salários - " +
+					TotSalMes.toLocaleString("pt-BR", {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					}),
 			},
 		},
 	};
-
-	const optionsBar = {
+	const optionsLineRec = {
+		responsive: true,
 		plugins: {
+			legend: {
+				position: "top" as const,
+			},
 			title: {
 				display: true,
-				text: "Chart.js Bar Chart - Stacked",
-			},
-		},
-		responsive: true,
-		interaction: {
-			mode: "index" as const,
-			intersect: false,
-		},
-		scales: {
-			x: {
-				stacked: true,
-			},
-			y: {
-				stacked: true,
+
+				text:
+					"Receitas + " +
+					recMesTotal.toLocaleString("pt-BR", {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					}) +
+					" | Despesas - " +
+					despMesTotal.toLocaleString("pt-BR", {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					}),
 			},
 		},
 	};
+	const optionsPie = {
+		responsive: true,
+		aspectRatio: 2,
+		plugins: {
+			legend: {
+				position: "top" as const,
+			},
+			title: {
+				display: true,
+				color: "#b6224f",
+				text:
+					"Salários Áreas - " +
+					TotSalMes.toLocaleString("pt-BR", {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					}),
+			},
+		},
+	};
+	const labels = [
+		"jan-2024",
+		"fev-2024",
+		"mar-2024",
+		"abr-2024",
+		"mai-2024",
+		"jun-2024",
+		"jul-2024",
+		"ago-2024",
+		"set-2024",
+		"out-2024",
+		"nov-2024",
+		"dez-2024",
+	].slice(0, mes);
 
-	const labels = _.orderBy(TotalSalariosMes, "mes").map((dt: any) => dt._id);
+	const labelMes = [
+		"01",
+		"02",
+		"03",
+		"04",
+		"05",
+		"06",
+		"07",
+		"08",
+		"09",
+		"10",
+		"11",
+		"12",
+		"13",
+		"14",
+		"15",
+		"16",
+		"17",
+		"18",
+		"19",
+		"20",
+		"21",
+		"22",
+		"23",
+		"24",
+		"25",
+		"26",
+		"27",
+		"28",
+		"29",
+		"30",
+		"31",
+	];
+
+	const datachart = _.flatMap(
+		labels
+			.map((l) => _.filter(TotSalarios, ["_id", l]))
+			.map((d) => d.map((c) => c?.salario))
+	);
+
+	//mapa receitas
+	const dataRec = _.map(
+		labelMes
+			.map((l) => _.filter(recDia, ["dia", l]))
+			.map((d) => d.map((c) => c?.valor))
+	);
+
+	let dataChartRec = dataRec.flatMap((element) =>
+		Array.isArray(element) && element.length === 0 ? 0 : element
+	);
+
+	let sum = 0;
+	let accumulated = dataChartRec.map((value) => (sum += value));
+	//fim mapa receitas
+
+	//mapa despesas
+	const dataDesp = _.map(
+		labelMes
+			.map((l) => _.filter(despDia, ["dia", l]))
+			.map((d) => d.map((c) => c?.valor))
+	);
+	let dataChartDesp = dataDesp.flatMap((element) =>
+		Array.isArray(element) && element.length === 0 ? 0 : element
+	);
+	let sumDesp = 0;
+	let accumulatedDesp = dataChartDesp.map((value) => (sumDesp += value));
+
+	//fim mapa despesas
+
+	const dataRecChart = {
+		labels: labelMes,
+		datasets: [
+			{
+				label: "Receitas",
+				data: accumulated,
+				borderColor: "#008282",
+				backgroundColor: "#008282",
+			},
+			{
+				label: "Despesas",
+				data: accumulatedDesp,
+				borderColor: "#ed254e",
+				backgroundColor: "#ed254e",
+			},
+		],
+	};
 
 	const data = {
 		labels,
 		datasets: [
 			{
-				label: "Salários",
-				data: _.orderBy(TotalSalariosMes, "mes").map((sal: any) => sal.salario),
-				borderColor: "rgb(240, 96, 57)",
-				backgroundColor: "rgba(255, 99, 132, 0.5)",
+				label: "Total de salários",
+				data: datachart,
+				borderColor: "black",
+				backgroundColor: "black",
 			},
-			// {
-			//   label: "Dataset 2",
-			//   data: [1, 4, 44, 56, 33, 90, 56],
-			//   borderColor: "rgb(53, 162, 235)",
-			//   backgroundColor: "rgba(53, 162, 235, 0.5)",
-			// },
-		],
-	};
-
-	const dataBar = {
-		labels,
-		datasets: [
 			{
+				type: "bar",
 				label: "Musculação",
-				data: _.filter(areas, ["_id[1]", "musculacao"]).map(
+				data: _.filter(areas2024, ["_id[1]", "musculacao"]).map(
 					(m: any) => m.salario
 				),
-				backgroundColor: "#293462",
-				stack: "Stack 0",
-			},
-			{
-				label: "Prime",
-				data: _.filter(areas, ["_id[1]", "prime"]).map((m: any) => m.salario),
-				backgroundColor: "#1CD6CE",
-				stack: "Stack 0",
-			},
-			{
-				label: "Geral",
-				data: _.filter(areas, ["_id[1]", "geral"]).map((m: any) => m.salario),
-				backgroundColor: "#FEDB39",
-				stack: "Stack 0",
-			},
-			{
-				label: "Judô",
-				data: _.filter(areas, ["_id[1]", "judo"]).map((m: any) => m.salario),
-				backgroundColor: "#D61C4E",
-				stack: "Stack 0",
-			},
-			{
-				label: "Pilates",
-				data: _.filter(areas, ["_id[1]", "pilates"]).map((m: any) => m.salario),
-				backgroundColor: "#781C68",
-				stack: "Stack 0",
-			},
-			{
-				label: "Natação",
-				data: _.filter(areas, ["_id[1]", "natacao"]).map((m: any) => m.salario),
-				backgroundColor: "#D36B00",
-				stack: "Stack 0",
-			},
-			{
-				label: "Boxe",
-				data: _.filter(areas, ["_id[1]", "boxe"]).map((m: any) => m.salario),
-				backgroundColor: "#224B0C",
-				stack: "Stack 0",
-			},
-			{
-				label: "MuaiThay",
-				data: _.filter(areas, ["_id[1]", "muaithay"]).map(
-					(m: any) => m.salario
-				),
-				backgroundColor: "#EED180",
-				stack: "Stack 0",
-			},
-			{
-				label: "Ballet",
-				data: _.filter(areas, ["_id[1]", "ballet"]).map((m: any) => m.salario),
-				backgroundColor: "#CA4E79",
+				backgroundColor: "#005682",
+				borderColor: "#005682",
 				stack: "Stack 0",
 			},
 			{
 				label: "Aulas",
-				data: _.filter(areas, ["_id[1]", "aulas"]).map((m: any) => m.salario),
-				backgroundColor: "#F15412",
+				type: "bar",
+				data: _.filter(areas2024, ["_id[1]", "aulas"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#c29fff",
+				borderColor: "#c29fff",
+				stack: "Stack 0",
+			},
+			{
+				label: "Prime",
+				type: "bar",
+				data: _.filter(areas2024, ["_id[1]", "prime"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#008282",
+				borderColor: "#008282",
+				stack: "Stack 0",
+			},
+			{
+				label: "Judo",
+				type: "bar",
+				data: _.filter(areas2024, ["_id[1]", "judo"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#4575f3",
+				borderColor: "#4575f3",
+				stack: "Stack 0",
+			},
+			{
+				label: "Pilates",
+				type: "bar",
+				data: _.filter(areas2024, ["_id[1]", "pilates"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#450a80",
+				borderColor: "#450a80",
+				stack: "Stack 0",
+			},
+			{
+				label: "Geral",
+				type: "bar",
+				data: _.filter(areas2024, ["_id[1]", "geral"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#e7cd8c",
+				borderColor: "#e7cd8c",
+				stack: "Stack 0",
+			},
+			{
+				label: "Natação",
+				type: "bar",
+				data: _.filter(areas2024, ["_id[1]", "natacao"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#8c0101",
+				borderColor: "#8c0101",
+				stack: "Stack 0",
+			},
+			{
+				label: "ballet",
+				data: _.filter(areas2024, ["_id[1]", "ballet"]).map(
+					(m: any) => m.salario
+				),
+				type: "bar",
+				backgroundColor: "#ffb296",
+				borderColor: "#ffb296",
+				stack: "Stack 0",
+			},
+			{
+				label: "Muaithay",
+				data: _.filter(areas2024, ["_id[1]", "muaithay"]).map(
+					(m: any) => m.salario
+				),
+				backgroundColor: "#a8e4a0",
+				borderColor: "#a8e4a0",
+				type: "bar",
 				stack: "Stack 0",
 			},
 		],
 	};
+	const labelsPizza = _.orderBy(TotSalAreas, "mod").map((lb: any) => lb.mod);
+
+	const dataPizza = _.orderBy(TotSalAreas, "mod").map((s) => s.valor);
+
+	const pizza = {
+		labels: labelsPizza,
+		datasets: [
+			{
+				label: "Total",
+				data: dataPizza,
+				backgroundColor: [
+					"#c29fff",
+					"#ffb296",
+					"#e7cd8c",
+					"#4575f3",
+					"#a8e4a0",
+					"#005682",
+					"#8c0101",
+					"#450a80",
+					"#008282",
+				],
+				hoverOffset: 4,
+			},
+		],
+	};
+
+	//fim graficos
 
 	return (
 		<>
 			<Navbar />
+			<div className='flex mt-10 justify-center  mb-4 items-center'>
+				<label
+					className=' hidden md:block mr-4 font-light   text-sm '
+					htmlFor='rec'>
+					MÊS E ANO DE REFERÊNCIA
+				</label>
 
-			<rec.Form method='get' action='.'>
-				<div className='flex justify-center items-center'>
-					<label className='mr-4 font-light   text-sm ' htmlFor='rec'>
-						MÊS E ANO DE REFERÊNCIA
-					</label>
-
-					{rec.state === "submitting" ? <icons.Load /> : null}
-					<Arrow />
+				<IoMdArrowDropright className='hidden md:block' />
+				<rec.Form method='get' action='.'>
 					<select
-						className='rounded text-blue-600 h-8  pl-5 pr-10 hover:border-gray-400 focus:outline-none '
+						className=' rounded text-zinc-600 h-8  pl-5 pr-10 hover:border-gray-400 focus:outline-none '
 						name='rec'
-						defaultValue={format(new Date(), "MMM-yyyy", { locale: pt })}
-						onChange={(event) => rec.submit(event.target.form)}>
+						defaultValue={format(new Date(), "MMM-yyyy", { locale: ptBR })}
+						value={numberMounth}
+						// onChange={}
+						onChange={handleSelectChange}>
 						<option hidden={true} value=''>
 							Selecione mês e ano referencia
 						</option>
-						<option value='jan-2024'>Janeiro - 2024</option>
-						<option value='fev-2024'>Fevereiro - 2024</option>
-						<option value='mar-2024'>Março - 2024</option>
-						<option value='abr-2024'>Abril - 2024</option>
-						<option value='mai-2024'>Maio - 2024</option>
-						<option value='jun-2024'>Junho - 2024</option>
-						<option value='jul-2024'>Julho - 2024</option>
-						<option value='ago-2024'>Agosto - 2024</option>
-						<option value='set-2024'>Setembro - 2024</option>
-						<option value='out-2024'>Outubro - 2024</option>
-						<option value='nov-2024'>Novembro - 2024</option>
-						<option value='dez-2024'>Dezembro - 2024</option>
+						<option value='01'>Janeiro - 2024</option>
+						<option value='02'>Fevereiro - 2024</option>
+						<option value='03'>Março - 2024</option>
+						<option value='04'>Abril - 2024</option>
+						<option value='05'>Maio - 2024</option>
+						<option value='06'>Junho - 2024</option>
+						<option value='07'>Julho - 2024</option>
+						<option value='08'>Agosto - 2024</option>
+						<option value='09'>Setembro - 2024</option>
+						<option value='10'>Outubro - 2024</option>
+						<option value='11'>Novembro - 2024</option>
+						<option value='12'>Dezembro - 2024</option>
 					</select>
-				</div>
-			</rec.Form>
-
-			<div className='container p-8 mx-auto'>
-				<div className=' grid grid-cols-3 gap-4'>
-					<div className='block shadow-md rounded-lg  text-center '>
-						<div className='rounded-t-lg  py-2 text-white bg-slate-600 flex justify-between px-4'>
-							<p>Despesas Fixas</p>
-							<p className='font-mono  '>
-								{DespesasFixasTotal?.toLocaleString("pt-br", {
-									minimumFractionDigits: 2,
-								})}
-							</p>
-						</div>
-						<div className='h-44 p-2 rounded-b-lg bg-white'>
-							<div className='overflow-y-auto  max-h-40 relative'>
-								<table className='text-sm w-full  text-left text-slate-500 '>
-									<tbody>
-										{totTipoDespesa?.map((desp: tipoDesp, index) => (
-											<tr key={index} className='bg-white border-b '>
-												<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-													{desp.conta}
-												</th>
-												<td className='py-2 px-6 font-mono text-right'>
-													{desp._sum.valor.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-													})}
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-					<div className='block shadow-md  rounded-t-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300 py-2 rounded-t-lg  text-white bg-slate-600  flex justify-between px-4'>
-							<p>Despesas Variáveis</p>
-							<p className='font-mono'>
-								{DespesasVariavelTotal?.toLocaleString("pt-br", {
-									minimumFractionDigits: 2,
-								})}
-							</p>
-						</div>
-						<div className='h-44 p-2 rounded-b-md  bg-white'>
-							<div className='overflow-y-auto rounded-t-md  max-h-56 relative'>
-								<table className='text-sm w-full rounded-b-lg   text-left text-slate-500 '>
-									<tbody>
-										{DespesasVariaveis?.map((desp: tipoDesp) => (
-											<tr key={desp.id} className='bg-white border-b '>
-												<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-													{desp.conta}
-												</th>
-												<td className='py-2 px-6 font-mono text-right'>
-													{desp.valor.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-													})}
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						</div>
-						{/* <div className="border-t border-gray-300 p-2 text-gray-600">
-            2 days ago
-          </div> */}
-					</div>
-					<div className='block shadow-md  rounded-t-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300 py-2 rounded-t-md  text-white bg-slate-600 flex justify-between px-4'>
-							<p>Despesas</p>
-							<p className='font-mono'>
-								{totalDesp._sum.valor?.toLocaleString("pt-br", {
-									minimumFractionDigits: 2,
-								})}
-							</p>
-						</div>
-						<div className='h-44 p-2 rounded-b-md  bg-white'>
-							<div className='overflow-y-auto  max-h-40 relative'>
-								<table className='text-sm w-full text-left text-slate-500 '>
-									<tbody>
-										{totTipoDespesa?.map((desp: tipoDesp) => (
-											<tr key={desp.id} className='bg-white border-b '>
-												<th className='py-2 px-1 w-40  font-medium text-slate-500 whitespace-nowrap '>
-													{desp.conta}
-												</th>
-												<td className='py-2 px-6 font-mono text-right'>
-													{desp._sum.valor.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-													})}
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						</div>
-						{/* <div className="border-t border-gray-300 p-2 text-gray-600">
-            2 days ago
-          </div> */}
-					</div>
-					<div className='block shadow-md  rounded-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300 py-2 text-white bg-sky-600 flex justify-between px-4'>
-							<p>Receitas</p>
-							<p className='font-mono'>
-								{totalRec._sum.valor?.toLocaleString("pt-br", {
+				</rec.Form>
+			</div>
+			<div className='grid gap-4 mt-2 container px-2 mx-auto  md:grid-cols-2  '>
+				<Card>
+					<CardHeader className='flex flex-row items-center  bg-stone-300 justify-between rounded-t-lg   space-y-0 pb-2 pt-2'>
+						<CardTitle className=' text-xl font-medium'>Receitas</CardTitle>
+						<Badge
+							variant='secondary'
+							className=' font-normal  text-sm  font-mono'>
+							{recMesTotal.toLocaleString("pt-BR", {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+							})}
+						</Badge>
+					</CardHeader>
+					<CardContent className='grid grid-cols-4 place-items-center  mt-4  '>
+						{recForma().map((l) => (
+							<div key={l.forma} className=' grid  place-items-center text-sm'>
+								{l.valor.toLocaleString("pt-BR", {
 									minimumFractionDigits: 2,
 									maximumFractionDigits: 2,
 								})}
-							</p>
-						</div>
-						<div className='h-44 p-2 bg-white'>
-							<div className='overflow-y-auto  max-h-40 relative'>
-								<table className='text-sm w-full  text-left text-slate-500 '>
-									<tbody>
-										{recMes?.map((rec: tipoRec) => (
-											<tr key={rec.id} className='bg-white border-b '>
-												<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-													{rec.centro}
-												</th>
-												<td className='py-2 px-6 font-mono text-right'>
-													{rec._sum.valor.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													})}
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
+								<Badge
+									variant='secondary'
+									className=' w-full   place-content-center text-center  mt-1 font-light text-blue-800  text-xs '>
+									{l.forma}
+								</Badge>
 							</div>
-						</div>
-						{/* <div className="border-t border-gray-300 p-2 text-gray-600">
-            2 days ago
-          </div> */}
-					</div>
-					<div className='block shadow-md  rounded-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300 py-2 text-white bg-sky-600  flex justify-between px-4'>
-							<p>Salários</p>
-							<p className='font-mono'>
-								{TotSalarioMes.map(
-									(t: { salario: any }) => t.salario
-								).toLocaleString("pt-br", {
+						))}
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className='flex flex-row items-center bg-stone-300 justify-between  space-y-0 pb-2 pt-2 rounded-t-lg '>
+						<CardTitle className=' text-xl  font-medium'>Despesas</CardTitle>
+						<Badge
+							variant='secondary'
+							className='font-normal  text-sm  font-mono'>
+							{despMesTotal.toLocaleString("pt-BR", {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+							})}
+						</Badge>
+					</CardHeader>
+					<CardContent className='grid grid-cols-4 place-items-center  mt-4  '>
+						{despConta().map((l) => (
+							<div key={l.conta} className=' grid  place-items-center text-sm'>
+								{l.valor.toLocaleString("pt-BR", {
 									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
 								})}
-							</p>
-						</div>
-						<div className='h-44 p-2 bg-white'>
-							<div className='overflow-y-auto  max-h-40 relative'>
-								<table className='text-sm w-full  text-left text-slate-500 '>
-									<tbody>
-										{TotSalAreas?.map((sal: any) => (
-											<tr key={sal.mod} className='bg-white border-b '>
-												<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-													{capitalize(sal.mod)}
-												</th>
-												<td className='py-2 px-6  font-mono text-right'>
-													{sal.valor.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													})}
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
+								<Badge
+									variant='secondary'
+									className=' w-full   place-content-center text-center  mt-1 font-light text-red-500  text-xs '>
+									{l.conta}
+								</Badge>
 							</div>
-						</div>
-					</div>
-					<div className='block shadow-md  rounded-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300 py-2 text-white bg-sky-600  flex justify-center items-center px-4'>
-							<p>Índices</p>
-						</div>
-						<div className='h-44 p-2 bg-white'>
-							<div className='overflow-y-auto  max-h-40 relative'>
-								<table className='text-sm w-full  text-left text-slate-500 '>
-									<tbody>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Salários Diretos
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												{SalDiretos?.toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												% Desp. Fixas
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												<div className='text-slate-500 font-sm '>
-													{PercentFixa}
-												</div>
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												% Variável
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												<div className='text-slate-500 font-sm '>
-													{PercentVariavel}
-												</div>
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Ocupação
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												<div className='text-slate-500 font-sm '>1.100</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
+						))}
+					</CardContent>
+				</Card>
+				<Card className='col-span-2'>
+					<CardHeader className='flex flex-row items-center bg-stone-300 justify-between rounded-t-lg  space-y-0 pb-2 pt-2'>
+						<CardTitle className=' text-xl font-medium'>Salarios</CardTitle>
+						<Badge
+							variant='secondary'
+							className=' font-normal  text-sm  font-mono'>
+							{TotSalMes.toLocaleString("pt-BR", {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+							})}
+						</Badge>
+					</CardHeader>
+					<CardContent className='grid grid-cols-9 place-items-center  mt-2 mb-2  '>
+						{TotSalAreas.map((s: any) => (
+							<div key={s.mod} className=' grid  place-items-center text-sm'>
+								{s.valor.toLocaleString("pt-BR", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}
+								<Badge
+									variant='secondary'
+									className=' w-full   place-content-center text-center  mt-1 font-light text-fuchsia-600  text-xs '>
+									{s.mod}
+								</Badge>
 							</div>
-						</div>
-					</div>
-					<div className='block shadow-md col-span-3  rounded-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300  py-2 text-white bg-fuchsia-950	 flex justify-center items-center  px-4'>
-							<p>Custos por Atividades</p>
-						</div>
-						<div className='h-92 p-2 bg-white'>
-							<div className='overflow-y-auto  max-h-90 relative'>
-								<table className='text-sm w-full  text-left text-slate-500 '>
-									<thead className='text-xs text-gray-700 uppercase bg-stone-100 sticky top-0 '>
-										<tr>
-											<th scope='col' className=' py-3  '>
-												Atividade
-											</th>
-											<th scope='col' className=' py-3 text-right '>
-												Sal Direto
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Sal Indiretos
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Gerais
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Encargos
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Individuais
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Custos Total
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Receitas
-											</th>
-											<th scope='col' className='py-3 text-right'>
-												Resultado
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Musculação
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("musculacao").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(637).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(637).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{encargos("musculacao").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("musculacao") +
-													salariosIndiretos(637) +
-													despesasRateio(637) +
-													encargos("musculacao") +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Musculação") +
-													salReceitasAreas("Hora Certa") +
-													salReceitasAreas("Assinatura") +
-													salReceitasAreas("Fitness")
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Musculação") +
-													salReceitasAreas("Hora Certa") +
-													salReceitasAreas("Assinatura") +
-													salReceitasAreas("Fitness") -
-													(salarioArea("musculacao") +
-														salariosIndiretos(637) +
-														despesasRateio(637) +
-														encargos("musculacao") +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Natação
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("natacao").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(144).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(144).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{encargos("natacao").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.9).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("natacao") +
-													salariosIndiretos(144) +
-													despesasRateio(144) +
-													encargos("natacao") +
-													gas * 0.9
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Natação Infantil") +
-													salReceitasAreas("Hidroginástica")
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Natação Infantil") +
-													salReceitasAreas("Hidroginástica") -
-													(salarioArea("natacao") +
-														salariosIndiretos(144) +
-														despesasRateio(144) +
-														encargos("natacao") +
-														gas * 0.9)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Ballet
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("ballet").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(81).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(81).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td></td>
-
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("ballet") +
-													salariosIndiretos(81) +
-													despesasRateio(81) +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salReceitasAreas("Ballet")?.toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Ballet") -
-													(salarioArea("ballet") +
-														salariosIndiretos(81) +
-														despesasRateio(81) +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Boxe
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("boxe").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(17).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(17).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{encargos("boxe").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("boxe") +
-													salariosIndiretos(17) +
-													despesasRateio(17) +
-													encargos("boxe") +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salReceitasAreas("Boxe")?.toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Boxe") -
-													(salarioArea("boxe") +
-														salariosIndiretos(17) +
-														despesasRateio(17) +
-														encargos("boxe") +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Prime
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("prime").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(29).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(29).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td></td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("prime") +
-													salariosIndiretos(29) +
-													despesasRateio(29) +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salReceitasAreas("Quattor Prime")?.toLocaleString(
-													"pt-br",
-													{
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													}
-												)}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Quattor Prime") -
-													(salarioArea("prime") +
-														salariosIndiretos(29) +
-														despesasRateio(29) +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Judô
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("judo").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(114).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(114).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td></td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("judo") +
-													salariosIndiretos(114) +
-													despesasRateio(114) +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salReceitasAreas("Judô")?.toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Judô") -
-													(salarioArea("judo") +
-														salariosIndiretos(114) +
-														despesasRateio(114) +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Aulas
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("aulas").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(20).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(20).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{encargos("aulas").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("aulas") +
-													salariosIndiretos(20) +
-													despesasRateio(20) +
-													encargos("aulas") +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("JiuJitsu") +
-													(salReceitasAreas("Pilates Solo") +
-														salReceitasAreas("Fitdance"))
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("JiuJitsu") +
-													(salReceitasAreas("Pilates Solo") +
-														salReceitasAreas("Fitdance")) -
-													(salarioArea("aulas") +
-														salariosIndiretos(20) +
-														despesasRateio(20) +
-														encargos("aulas") +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Pilates
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("pilates").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(35).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(35).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td></td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("pilates") +
-													salariosIndiretos(35) +
-													despesasRateio(35) +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salReceitasAreas("Pilates Estudio")?.toLocaleString(
-													"pt-br",
-													{
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													}
-												)}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("Pilates Estudio") -
-													(salarioArea("pilates") +
-														salariosIndiretos(35) +
-														despesasRateio(35) +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Muaithay
-											</th>
-											<td className='py-2 font-mono  text-right'>
-												{salarioArea("muaithay").toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salariosIndiretos(23).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{despesasRateio(23).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td></td>
-											<td className='py-2 font-mono  text-right'>
-												{(gas * 0.0125).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salarioArea("muaithay") +
-													salariosIndiretos(23) +
-													despesasRateio(23) +
-													gas * 0.0125
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{salReceitasAreas("MuayThai")?.toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-											<td className='py-2 font-mono  text-right'>
-												{(
-													salReceitasAreas("MuayThai") -
-													(salarioArea("muaithay") +
-														salariosIndiretos(23) +
-														despesasRateio(23) +
-														gas * 0.0125)
-												).toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-					<div className='block shadow-md  col-span-2 rounded-md border border-gray-300 bg-gray text-center '>
-						<div className='border-gray-300  py-2 text-white bg-emerald-600  flex justify-center items-center  px-4'>
-							<p>Previsão de Receitas</p>
-						</div>
-						<div className='h-44 p-2 bg-white'>
-							<div className='overflow-y-auto  max-h-40 relative'>
-								<table className='text-sm w-full  text-left text-slate-500 '>
-									<tbody>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Previsão
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												{previsao.toLocaleString("pt-br", {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Lucro
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												<div className='text-slate-500 font-sm '>
-													{Lucro.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													})}
-												</div>
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Ponto de Equilíbrio
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												<div className='text-slate-500 font-sm '>
-													{PontoEquilibrio.toLocaleString("pt-br", {
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													})}
-												</div>
-											</td>
-										</tr>
-										<tr className='bg-white border-b '>
-											<th className='py-2 px-1 w-40  font-medium text-slate-900 whitespace-nowrap '>
-												Ponto de Equilíbrio Quantidade
-											</th>
-											<td className='py-2 px-6  font-mono text-right'>
-												<div className='text-slate-500 font-sm '>
-													{PontoEquilibrioQtd.toLocaleString("pt-br", {
-														maximumFractionDigits: 0,
-													})}
-												</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
+						))}
+					</CardContent>
+				</Card>
+				<Card>
+					<Line options={optionsLine} data={data} />
+				</Card>
+				<Card>
+					<Doughnut options={optionsPie} data={pizza} />
+				</Card>
+				<div className='col-span-2 place-content-center flex'>
+					<Card className=' w-1/2'>
+						<Line options={optionsLineRec} data={dataRecChart} />
+					</Card>
 				</div>
-				<div className='grid grid-cols-3 gap-4'>
-					<div className='col-span-2'>
-						<Bar options={optionsBar} data={dataBar} />
+
+				<div className='col-span-2 rounded-none'>
+					<div className='text-center font-bold  text-lg text-stone-600 mb-1'>
+						Demonstrativos dos Resultados
 					</div>
-					<div>
-						<Line options={optionsLine} data={data} />
-					</div>
+					{Resultados(
+						recMesTotal,
+						despMesVariavel,
+						despMesTotalVariavel,
+						despMesFixa,
+						despMesTotalFixa,
+						TotSalMes
+					)}
 				</div>
 			</div>
 		</>

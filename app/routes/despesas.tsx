@@ -6,8 +6,8 @@ import { getDespesas } from "~/utils/despesas.server";
 import type { tipoDesp } from "~/utils/types.server";
 import { useState } from "react";
 import { requireUserSession } from "~/utils/auth.server";
-import format from "date-fns/format";
-import ptBR from "date-fns/locale/pt-BR";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const loader: LoaderFunction = async ({ request }) => {
 	await requireUserSession(request);
@@ -77,9 +77,7 @@ export default function Despesas() {
 							<th scope='col' className='px-6 py-3'>
 								Descrição
 							</th>
-							<th scope='col' className='px-6 py-3'>
-								Mês
-							</th>
+
 							<th scope='col' className='px-6 py-3'>
 								Data
 							</th>
@@ -105,9 +103,11 @@ export default function Despesas() {
 									{desp.conta}
 								</th>
 								<td className='px-6 py-3 '>{desp.descricao}</td>
-								<td className='px-6 py-3 '>{desp.referencia}</td>
+
 								<td className='px-6 py-3 '>
-									{format(new Date(desp.data), "dd - MMM", { locale: ptBR })}
+									{format(new Date(desp.data), "dd - MMM - yyyy", {
+										locale: ptBR,
+									})}
 								</td>
 								<td className='px-6  text-right'>{desp.tipo}</td>
 								<td className='px-6  text-right '>

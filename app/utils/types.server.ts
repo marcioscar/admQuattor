@@ -25,6 +25,7 @@ export type ReceitaForm = {
   valor: string;
   id?: string;
   referencia: string;
+  status:string;
 };
 
 export type tipoRec = {
