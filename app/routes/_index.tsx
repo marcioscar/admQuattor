@@ -55,6 +55,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const TotSalarios = await groupSalario();
 	const salAreas = await groupSalarioAreas(parametro);
 	const areas = await SalarioAreasNovo();
+	console.log(receitas);
 
 	return { receitas, despesas, TotSalarios, salAreas, areas };
 };
@@ -70,14 +71,18 @@ export default function Results() {
 	const [numberMounth, setMumberMounth] = useState(
 		format(new Date(), "MM", { locale: ptBR })
 	);
+
 	const handleSelectChange = (event: any) => {
 		rec.submit(event.target.form);
 		setMumberMounth(event.target.value);
 	};
 
 	const ano = getYear(new Date());
-	const mes = getMonth(new Date(`2024/${numberMounth}`)) + 1;
+	// const mes = getMonth(new Date(`2024/${numberMounth}`)) + 1;
+	const mes = +numberMounth;
 
+	console.log(+numberMounth);
+	console.log(mes);
 	const mesnome =
 		new Date(`2024/${numberMounth}`)
 			.toLocaleString("pt-BR", {
@@ -115,12 +120,12 @@ export default function Results() {
 	const recDia = recDiaf();
 
 	//fim receitas
-
+	console.log(mesnome);
 	//despesas
 	const TotSalMesString = _.filter(TotSalarios, ["_id", mesnome]);
 
 	const TotSalMes = parseFloat(TotSalMesString.map((s) => s?.salario));
-
+	console.log(TotSalMes);
 	const despMes = _.filter(despesas, (item) => {
 		const itemDate = new Date(item.data);
 		return getYear(itemDate) === ano && getMonth(itemDate) + 1 === mes;
@@ -495,6 +500,7 @@ export default function Results() {
 				</label>
 
 				<IoMdArrowDropright className='hidden md:block' />
+
 				<rec.Form method='get' action='.'>
 					<select
 						className=' rounded text-zinc-600 h-8  pl-5 pr-10 hover:border-gray-400 focus:outline-none '
@@ -551,7 +557,9 @@ export default function Results() {
 					</CardContent>
 				</Card>
 				<Card>
-					<CardHeader className='flex flex-row items-center bg-stone-300 justify-between  space-y-0 pb-2 pt-2 rounded-t-lg '>
+					<CardHeader
+						key={despMesTotal}
+						className=' flex flex-row items-center bg-stone-300 justify-between  space-y-0 pb-2 pt-2 rounded-t-lg '>
 						<CardTitle className=' text-xl  font-medium'>Despesas</CardTitle>
 						<Badge
 							variant='secondary'
@@ -590,6 +598,7 @@ export default function Results() {
 							})}
 						</Badge>
 					</CardHeader>
+
 					<CardContent className='grid grid-cols-9 place-items-center  mt-2 mb-2  '>
 						{TotSalAreas.map((s: any) => (
 							<div key={s.mod} className=' grid  place-items-center text-sm'>
