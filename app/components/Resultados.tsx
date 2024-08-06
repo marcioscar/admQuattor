@@ -33,6 +33,30 @@ export default function Resultados(
 
 		return _.flatten(_.values(desp));
 	}
+	function grupodespesasFixas(conta: any) {
+		const desp = _.groupBy(
+			despMesFixa.filter((o: { tipo: string; conta: string }) =>
+				o.conta.includes(conta)
+			),
+			"conta"
+		);
+
+		return _.flatten(_.values(desp));
+	}
+
+	function despTipoMesFixa() {
+		const tot = _.map(_.groupBy(despMesFixa, "conta"), (conta, idx) => {
+			return { conta: idx, valor: _.sumBy(conta, "valor") };
+		});
+		return _.orderBy(tot, ["valor"], ["desc"]);
+	}
+
+	function despTipoMesVariavel() {
+		const tot = _.map(_.groupBy(despMesVariavel, "conta"), (conta, idx) => {
+			return { conta: idx, valor: _.sumBy(conta, "valor") };
+		});
+		return _.orderBy(tot, ["valor"], ["desc"]);
+	}
 
 	return (
 		<div>
@@ -114,7 +138,7 @@ export default function Resultados(
 							}).format(despMesTotalVariavel / recMesTotal)}
 						</TableCell>
 					</TableRow>
-					{despMesVariavel.map((f: any, index: any) => (
+					{despTipoMesVariavel().map((f: any, index: any) => (
 						<TableRow className='bg-stone-50' key={index}>
 							<TableCell className='font-thin text-sm pl-6'>
 								<Accordion className='p-0' type='single' collapsible>
@@ -183,28 +207,13 @@ export default function Resultados(
 							}).format(despMesTotalFixa / recMesTotal)}
 						</TableCell>
 					</TableRow>
-					{/* <TableRow className='bg-stone-50'>
-						<TableCell className='font-thin text-sm pl-6'>Salários</TableCell>
-						<TableCell className='font-mono text-right'>
-							{TotSalMes.toLocaleString("pt-br", {
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2,
-							})}
-						</TableCell>
-						<TableCell className='font-mono text-center'>
-							{new Intl.NumberFormat("de-DE", {
-								style: "percent",
-							}).format(TotSalMes / recMesTotal)}
-						</TableCell>
-					</TableRow> */}
-
-					{despMesFixa.map((f: any, index: any) => (
+					{despTipoMesFixa().map((f: any, index) => (
 						<TableRow className='bg-stone-50' key={index}>
 							<TableCell className='font-thin text-sm pl-6'>
 								<Accordion className='p-0' type='single' collapsible>
 									<AccordionItem value='desp'>
-										{grupodespesasVariavel(f.conta).length >= 1 &&
-										grupodespesasVariavel(f.conta)
+										{grupodespesasFixas(f.conta).length >= 1 &&
+										grupodespesasFixas(f.conta)
 											.map((g) => g.descricao)
 											.toString() !== "" ? (
 											<AccordionTrigger className='font-light  '>
@@ -214,16 +223,12 @@ export default function Resultados(
 											f.conta
 										)}
 
-										{grupodespesasVariavel(f.conta).map((g) => (
+										{grupodespesasFixas(f.conta).map((g) => (
 											<AccordionContent key={f.conta}>
-												{grupodespesasVariavel(f.conta).length >= 1 &&
+												{grupodespesasFixas(f.conta).length >= 1 &&
 													g.descricao !== null && (
 														<div className=' grid grid-cols-2'>
-															<div>
-																{format(g.data, "dd  MMM  yyyy", {
-																	locale: ptBR,
-																})}
-															</div>
+															<div>{g.descricao}</div>
 															<div className='  text-end'>
 																{g.valor.toLocaleString("pt-br", {
 																	minimumFractionDigits: 2,
@@ -247,10 +252,63 @@ export default function Resultados(
 							<TableCell className='font-mono text-center'>
 								{new Intl.NumberFormat("de-DE", {
 									style: "percent",
-								}).format(f.valor / despMesTotalVariavel)}
+								}).format(f.valor / despMesTotalFixa)}
 							</TableCell>
 						</TableRow>
 					))}
+					{/* {despMesFixa.map((f: any, index: any) => (
+						<TableRow className='bg-stone-50' key={index}>
+							<TableCell className='font-thin text-sm pl-6'>
+								<Accordion className='p-0' type='single' collapsible>
+									<AccordionItem value='desp'>
+										{grupodespesasFixas(f.conta).length >= 1 &&
+										grupodespesasFixas(f.conta)
+											.map((g) => g.descricao)
+											.toString() !== "" ? (
+											<AccordionTrigger className='font-light  '>
+												{f.conta}
+											</AccordionTrigger>
+										) : (
+											f.conta
+										)}
+
+										{grupodespesasFixas(f.conta).map((g) => (
+											<AccordionContent key={f.conta}>
+												{grupodespesasFixas(f.conta).length >= 1 &&
+													g.descricao !== null && (
+														<div className=' grid grid-cols-2'>
+															<div>
+																{format(g.data, "dd  MMM  yyyy", {
+																	locale: ptBR,
+																})}
+															</div>
+															<div className='  text-end'>
+																{g.valor.toLocaleString("pt-br", {
+																	minimumFractionDigits: 2,
+																	maximumFractionDigits: 2,
+																})}
+															</div>
+														</div>
+													)}
+											</AccordionContent>
+										))}
+									</AccordionItem>
+								</Accordion>
+								
+							</TableCell>
+							<TableCell className='font-mono text-right'>
+								{f.valor.toLocaleString("pt-br", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}
+							</TableCell>
+							<TableCell className='font-mono text-center'>
+								{new Intl.NumberFormat("de-DE", {
+									style: "percent",
+								}).format(f.valor / despMesTotalFixa)}
+							</TableCell>
+						</TableRow>
+					))} */}
 				</TableBody>
 			</Table>
 		</div>

@@ -3,7 +3,7 @@ import Resultados from "@/components/Resultados";
 import { getReceitas } from "@/utils/receitas.server";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { IoMdArrowDropright } from "react-icons/io";
-import { format, getDay, getMonth, getYear } from "date-fns";
+import { format, getMonth, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
