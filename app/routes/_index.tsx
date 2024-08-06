@@ -55,7 +55,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const TotSalarios = await groupSalario();
 	const salAreas = await groupSalarioAreas(parametro);
 	const areas = await SalarioAreasNovo();
-	console.log(receitas);
 
 	return { receitas, despesas, TotSalarios, salAreas, areas };
 };
