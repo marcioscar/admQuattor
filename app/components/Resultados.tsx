@@ -183,7 +183,7 @@ export default function Resultados(
 							}).format(despMesTotalFixa / recMesTotal)}
 						</TableCell>
 					</TableRow>
-					<TableRow className='bg-stone-50'>
+					{/* <TableRow className='bg-stone-50'>
 						<TableCell className='font-thin text-sm pl-6'>Salários</TableCell>
 						<TableCell className='font-mono text-right'>
 							{TotSalMes.toLocaleString("pt-br", {
@@ -196,7 +196,7 @@ export default function Resultados(
 								style: "percent",
 							}).format(TotSalMes / recMesTotal)}
 						</TableCell>
-					</TableRow>
+					</TableRow> */}
 
 					{despMesFixa.map((f: any, index: any) => (
 						<TableRow className='bg-stone-50' key={index}>

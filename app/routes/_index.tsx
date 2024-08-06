@@ -81,8 +81,6 @@ export default function Results() {
 	// const mes = getMonth(new Date(`2024/${numberMounth}`)) + 1;
 	const mes = +numberMounth;
 
-	console.log(+numberMounth);
-	console.log(mes);
 	const mesnome =
 		new Date(`2024/${numberMounth}`)
 			.toLocaleString("pt-BR", {
@@ -120,7 +118,7 @@ export default function Results() {
 	const recDia = recDiaf();
 
 	//fim receitas
-	console.log(mesnome);
+
 	//despesas
 	const TotSalMesString = _.filter(TotSalarios, ["_id", mesnome]);
 
@@ -152,7 +150,7 @@ export default function Results() {
 			item.tipo === "fixa"
 		);
 	});
-	const despMesTotalFixa = _.sumBy(despMesFixa, "valor") + TotSalMes;
+	const despMesTotalFixa = _.sumBy(despMesFixa, "valor");
 
 	//fim fixa
 
