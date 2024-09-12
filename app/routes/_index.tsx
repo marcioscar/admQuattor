@@ -97,6 +97,13 @@ export default function Results() {
 
 	const recMesTotal = _.sumBy(recMes, "valor");
 
+	const recMesAnterior = _.filter(receitas, (item: any) => {
+		const itemDate = new Date(item.data);
+		return getYear(itemDate) === ano && getMonth(itemDate) + 1 === mes - 1;
+	});
+
+	const recMesTotalAnterior = _.sumBy(recMesAnterior, "valor");
+
 	function recForma() {
 		const tot = _.map(_.groupBy(recMes, "forma"), (forma, idx) => {
 			return { forma: idx, valor: _.sumBy(forma, "valor") };
@@ -150,6 +157,16 @@ export default function Results() {
 		);
 	});
 	const despMesTotalFixa = _.sumBy(despMesFixa, "valor");
+
+	const despMesFixaAnterior = _.filter(despesas, (item) => {
+		const itemDate = new Date(item.data);
+		return (
+			getYear(itemDate) === ano &&
+			getMonth(itemDate) + 1 === mes - 1 &&
+			item.tipo === "fixa"
+		);
+	});
+	const despMesTotalFixaAnterior = _.sumBy(despMesFixaAnterior, "valor");
 
 	//fim fixa
 
@@ -630,10 +647,13 @@ export default function Results() {
 					</div>
 					{Resultados(
 						recMesTotal,
+						recMesTotalAnterior,
 						despMesVariavel,
 						despMesTotalVariavel,
 						despMesFixa,
 						despMesTotalFixa,
+						despMesFixaAnterior,
+						despMesTotalFixaAnterior,
 						TotSalMes
 					)}
 				</div>
