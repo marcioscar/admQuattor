@@ -11,7 +11,7 @@ export const getDespesas = async (ano:string) => {
       },
     },
     orderBy: {
-      data: "asc",
+      data: "desc",
     },
   });
 };
