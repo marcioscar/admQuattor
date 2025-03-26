@@ -27,6 +27,7 @@ model despesas {
     tipo       String
     valor      Float
     referencia String?
+    pago       Boolean?
 }
 
 // model receitas {
@@ -72,4 +73,15 @@ model contas {
     etiqueta String
     conta    String
     tipo     String?
+}
+
+model turmas {
+    id        String  @id @default(auto()) @map("_id") @db.ObjectId
+    nome      String
+    sobrenome String
+    matricula String
+    turma     String
+    plano     String?
+    valor     Float?
+    desconto  Float?
 }

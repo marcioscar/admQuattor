@@ -164,6 +164,7 @@ export const createDespesa = async (despesa: any) => {
       referencia: referencia,
       tipo: despesa.tipo,
       valor: parseFloat(despesa.valor.replace(".", "").replace(",", ".")),
+      pago: false
     },
   });
   return { newDespesa };
@@ -183,6 +184,7 @@ export const updateDespesa = async (despesa: DespesaForm) => {
       referencia: referencia,
       tipo: despesa.tipo,
       valor: parseFloat(despesa.valor.replace(".", "").replace(",", ".")),
+      pago: false
     },
   });
   return { newDespesa };
